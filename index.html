@@ -419,7 +419,7 @@
               </div>
               
               <div class="col-md-3">
-                  <label class="form-label">Quantità da trasformare (kg)</label>
+                  <label class="form-label">Quantità trasformata (kg)</label>
                   <input type="number" class="form-control quantita-trasformata" min="0" placeholder="0">
               </div>
               
@@ -543,6 +543,7 @@
                           <option value="CISTERNA EF">CISTERNA EF</option>
                           <option value="CISTERNA VK">CISTERNA VK</option>
                           <option value="CISTERNA GS">CISTERNA GS</option>
+                          <option value="CISTERNA CARTH.">CISTERNA CARTH.</option>
                           <option value="CONCENTRATO">CONCENTRATO</option>
                           <option value="ALTRO">ALTRO</option>
                       </select>
@@ -799,7 +800,7 @@
                  'LIMONE': { prima: 30, seconda: 10, torchiato: 5 },
                  'ARANCIA': { prima: 35, seconda: 12, torchiato: 6 },
                  'MANDARINO': { prima: 42, seconda: 10, torchiato: 4 },
-                 'POMPELMO': { prima: 50, seconda: 15, torchiato: 6 },
+                 'POMPELMO': { prima: 30, seconda: 15, torchiato: 6 },
                  'BERGAMOTTO': { prima: 30, seconda: 8, torchiato: 3 }
              };
              return yields[agrume] || { prima: 45, seconda: 10, torchiato: 4 };
