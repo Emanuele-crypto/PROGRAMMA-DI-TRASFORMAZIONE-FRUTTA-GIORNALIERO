@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
       body {
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -106,6 +107,22 @@
           transform: translateY(-2px);
           box-shadow: 0 5px 15px rgba(255, 193, 7, 0.4);
           color: #212529;
+      }
+      
+      .btn-info {
+          background: linear-gradient(135deg, #17a2b8, #20c997);
+          border: none;
+          border-radius: 8px;
+          padding: 12px 25px;
+          font-weight: 600;
+          transition: all 0.3s ease;
+          color: white;
+      }
+      
+      .btn-info:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 5px 15px rgba(23, 162, 184, 0.4);
+          color: white;
       }
       
       .calculated-field {
@@ -248,6 +265,99 @@
           font-weight: normal;
           margin-top: 5px;
       }
+      
+      /* Stili per la pagina statistiche */
+      .stats-modal {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0,0,0,0.5);
+          display: none;
+          z-index: 1000;
+      }
+      
+      .stats-content {
+          position: relative;
+          background-color: white;
+          margin: 2% auto;
+          padding: 20px;
+          width: 90%;
+          max-width: 1400px;
+          height: 90%;
+          border-radius: 15px;
+          overflow-y: auto;
+      }
+      
+      .stats-header {
+          background: linear-gradient(135deg, #1e3c72, #2a5298);
+          color: white;
+          padding: 20px;
+          border-radius: 10px;
+          margin-bottom: 20px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
+      
+      .close-stats {
+          color: white;
+          font-size: 28px;
+          font-weight: bold;
+          cursor: pointer;
+      }
+      
+      .close-stats:hover {
+          color: #f0f0f0;
+      }
+      
+      .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+          gap: 20px;
+      }
+      
+      .stats-card {
+          background: white;
+          border-radius: 10px;
+          padding: 20px;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+          border-left: 4px solid #2a5298;
+      }
+      
+      .chart-container {
+          position: relative;
+          height: 300px;
+          margin-top: 20px;
+      }
+      
+      .stats-summary {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 15px;
+          margin-bottom: 30px;
+      }
+      
+      .summary-item {
+          background: linear-gradient(135deg, #e7f3ff, #f0f8ff);
+          padding: 20px;
+          border-radius: 10px;
+          text-align: center;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      }
+      
+      .summary-value {
+          font-size: 36px;
+          font-weight: bold;
+          color: #1e3c72;
+      }
+      
+      .summary-label {
+          font-size: 14px;
+          color: #6c757d;
+          margin-top: 5px;
+      }
   </style>
 </head>
 <body>
@@ -380,9 +490,70 @@
           <button type="button" class="btn btn-outline-secondary btn-lg me-3" id="anteprima-stampa">
               <i class="bi bi-printer"></i> Anteprima Stampa
           </button>
+          <button type="button" class="btn btn-info btn-lg me-3" id="apri-statistiche">
+              <i class="bi bi-bar-chart-line"></i> Statistiche Interattive
+          </button>
           <button type="button" class="btn btn-outline-danger btn-lg" id="reset-programma">
               <i class="bi bi-arrow-clockwise"></i> Reset Programma
           </button>
+      </div>
+  </div>
+
+  <!-- Modal Statistiche -->
+  <div id="stats-modal" class="stats-modal">
+      <div class="stats-content">
+          <div class="stats-header">
+              <h2><i class="bi bi-bar-chart-line"></i> Statistiche Interattive Produzione</h2>
+              <span class="close-stats">&times;</span>
+          </div>
+          
+          <div class="stats-summary" id="stats-summary">
+              <!-- Sommario statistiche caricate dinamicamente -->
+          </div>
+          
+          <div class="stats-grid">
+              <div class="stats-card">
+                  <h4>Distribuzione Produzione per Fornitore</h4>
+                  <div class="chart-container">
+                      <canvas id="chartFornitori"></canvas>
+                  </div>
+              </div>
+              
+              <div class="stats-card">
+                  <h4>Rese Medie per Tipo Prodotto</h4>
+                  <div class="chart-container">
+                      <canvas id="chartRese"></canvas>
+                  </div>
+              </div>
+              
+              <div class="stats-card">
+                  <h4>Distribuzione Certificazioni</h4>
+                  <div class="chart-container">
+                      <canvas id="chartCertificazioni"></canvas>
+                  </div>
+              </div>
+              
+              <div class="stats-card">
+                  <h4>Timeline Produzione</h4>
+                  <div class="chart-container">
+                      <canvas id="chartTimeline"></canvas>
+                  </div>
+              </div>
+              
+              <div class="stats-card">
+                  <h4>Efficienza Linee di Produzione</h4>
+                  <div class="chart-container">
+                      <canvas id="chartEfficienza"></canvas>
+                  </div>
+              </div>
+              
+              <div class="stats-card">
+                  <h4>Analisi Destinazioni Prodotti</h4>
+                  <div class="chart-container">
+                      <canvas id="chartDestinazioni"></canvas>
+                  </div>
+              </div>
+          </div>
       </div>
   </div>
 
@@ -543,110 +714,110 @@
                           <option value="CISTERNA EF">CISTERNA EF</option>
                           <option value="CISTERNA VK">CISTERNA VK</option>
                           <option value="CISTERNA GS">CISTERNA GS</option>
-                          <option value="CISTERNA CARTH.">CISTERNA CARTH.</option>
-                          <option value="CONCENTRATO">CONCENTRATO</option>
-                          <option value="ALTRO">ALTRO</option>
-                      </select>
-                      <select class="form-select mt-2 bx-concentrato hidden-field">
-                          <option value="">Seleziona °BX</option>
-                          <option value="32">32 °BX</option>
-                          <option value="40">40 °BX</option>
-                          <option value="45">45 °BX</option>
-                          <option value="48">48 °BX</option>
-                          <option value="55">55 °BX</option>
-                          <option value="58">58 °BX</option>
-                          <option value="60">60 °BX</option>
-                          <option value="63.5">63.5 °BX</option>
-                          <option value="65">65 °BX</option>
-                      </select>
-                      <input type="text" class="form-control mt-2 altra-destinazione hidden-field" placeholder="Specifica altra destinazione">
-                  </div>
-                  
-                  <div class="col-md-4">
-                      <label class="form-label">Destinazione Succo 2ª</label>
-                      <select class="form-select destinazione-seconda">
-                          <option value="">Seleziona destinazione</option>
-                          <option value="NAT IN TINI">NAT IN TINI</option>
-                          <option value="CONCENTRATO">CONCENTRATO</option>
-                          <option value="ALTRO">ALTRO</option>
-                      </select>
-                      <select class="form-select mt-2 bx-concentrato hidden-field">
-                          <option value="">Seleziona °BX</option>
-                          <option value="32">32 °BX</option>
-                          <option value="40">40 °BX</option>
-                          <option value="45">45 °BX</option>
-                          <option value="48">48 °BX</option>
-                          <option value="55">55 °BX</option>
-                          <option value="58">58 °BX</option>
-                          <option value="60">60 °BX</option>
-                          <option value="63.5">63.5 °BX</option>
-                          <option value="65">65 °BX</option>
-                      </select>
-                      <input type="text" class="form-control mt-2 altra-destinazione hidden-field" placeholder="Specifica altra destinazione">
-                  </div>
-                  
-                  <div class="col-md-4">
-                      <label class="form-label">Destinazione Torchiato</label>
-                      <select class="form-select destinazione-torchiato">
-                          <option value="">Seleziona destinazione</option>
-                          <option value="NAT IN TINI">NAT IN TINI</option>                         
-                          <option value="F.F.">F.F.</option>
-                          <option value="F.T.C">F.T.C</option>
-                          <option value="FBL">FBL</option>
-                          <option value="BIC">BIC</option>
-                          <option value="CONCENTRATO">CONCENTRATO</option>
-                          <option value="ALTRO">ALTRO</option>
-                      </select>
-                      <input type="text" class="form-control mt-2 altra-destinazione hidden-field" placeholder="Specifica altra destinazione">
-                  </div>
-              </div>
-              
-              <!-- Pastorizzazione -->
-              <div class="row g-3 mt-3">
-                  <div class="col-md-4">
-                      <label class="form-label">Pastorizzato</label>
-                      <select class="form-select pastorizzato-prima">
-                          <option value="SI">SI</option>
-                          <option value="NO">NO</option>
-                      </select>
-                  </div>
-                  
-                  <div class="col-md-4">
-                      <label class="form-label">Pastorizzato</label>
-                      <select class="form-select pastorizzato-seconda">
-                          <option value="SI">SI</option>
-                          <option value="NO">NO</option>
-                      </select>
-                  </div>
-                  
-                  <div class="col-md-4">
-                      <label class="form-label">Pastorizzato</label>
-                      <select class="form-select pastorizzato-torchiato">
-                          <option value="SI">SI</option>
-                          <option value="NO">NO</option>
-                      </select>
-                  </div>
-              </div>
-              
-              <!-- Tenore di polpa, Brix e Bio per ogni prodotto -->
-              <div class="row g-3 mt-3">
-                  <div class="col-md-4">
-                      <label class="form-label">Tenore Polpa Succo 1ª</label>
-                      <select class="form-select tenore-polpa-prima">
-                          <option value="STANDARD">STANDARD</option>
-                          <option value="LIMPIDO">LIMPIDO</option>
-                          <option value="SEMICLEAR">SEMICLEAR</option>
-                          <option value="1%">1%</option>
-                          <option value="2%">2%</option>
-                          <option value="3%">3%</option>
-                          <option value="6%">6%</option>
-                          <option value="ALTRO">ALTRO</option>
-                      </select>
-                      <input type="text" class="form-control mt-2 altro-tenore-prima hidden-field" placeholder="Specifica altro tenore">
-                      
-                      <label class="form-label mt-2">Brix</label>
-                      <select class="form-select brix-prima">
-<option value="NAT">NAT</option>
+                         <option value="CISTERNA CARTH.">CISTERNA CARTH.</option>
+                         <option value="CONCENTRATO">CONCENTRATO</option>
+                         <option value="ALTRO">ALTRO</option>
+                     </select>
+                     <select class="form-select mt-2 bx-concentrato hidden-field">
+                         <option value="">Seleziona °BX</option>
+                         <option value="32">32 °BX</option>
+                         <option value="40">40 °BX</option>
+                         <option value="45">45 °BX</option>
+                         <option value="48">48 °BX</option>
+                         <option value="55">55 °BX</option>
+                         <option value="58">58 °BX</option>
+                         <option value="60">60 °BX</option>
+                         <option value="63.5">63.5 °BX</option>
+                         <option value="65">65 °BX</option>
+                     </select>
+                     <input type="text" class="form-control mt-2 altra-destinazione hidden-field" placeholder="Specifica altra destinazione">
+                 </div>
+                 
+                 <div class="col-md-4">
+                     <label class="form-label">Destinazione Succo 2ª</label>
+                     <select class="form-select destinazione-seconda">
+                         <option value="">Seleziona destinazione</option>
+                         <option value="NAT IN TINI">NAT IN TINI</option>
+                         <option value="CONCENTRATO">CONCENTRATO</option>
+                         <option value="ALTRO">ALTRO</option>
+                     </select>
+                     <select class="form-select mt-2 bx-concentrato hidden-field">
+                         <option value="">Seleziona °BX</option>
+                         <option value="32">32 °BX</option>
+                         <option value="40">40 °BX</option>
+                         <option value="45">45 °BX</option>
+                         <option value="48">48 °BX</option>
+                         <option value="55">55 °BX</option>
+                         <option value="58">58 °BX</option>
+                         <option value="60">60 °BX</option>
+                         <option value="63.5">63.5 °BX</option>
+                         <option value="65">65 °BX</option>
+                     </select>
+                     <input type="text" class="form-control mt-2 altra-destinazione hidden-field" placeholder="Specifica altra destinazione">
+                 </div>
+                 
+                 <div class="col-md-4">
+                     <label class="form-label">Destinazione Torchiato</label>
+                     <select class="form-select destinazione-torchiato">
+                         <option value="">Seleziona destinazione</option>
+                         <option value="NAT IN TINI">NAT IN TINI</option>
+                         <option value="F.F.">F.F.</option>
+                         <option value="F.T.C">F.T.C</option>
+                         <option value="FBL">FBL</option>
+                         <option value="BIC">BIC</option>
+                         <option value="CONCENTRATO">CONCENTRATO</option>
+                         <option value="ALTRO">ALTRO</option>
+                     </select>
+                     <input type="text" class="form-control mt-2 altra-destinazione hidden-field" placeholder="Specifica altra destinazione">
+                 </div>
+             </div>
+             
+             <!-- Pastorizzazione -->
+             <div class="row g-3 mt-3">
+                 <div class="col-md-4">
+                     <label class="form-label">Pastorizzato</label>
+                     <select class="form-select pastorizzato-prima">
+                         <option value="SI">SI</option>
+                         <option value="NO">NO</option>
+                     </select>
+                 </div>
+                 
+                 <div class="col-md-4">
+                     <label class="form-label">Pastorizzato</label>
+                     <select class="form-select pastorizzato-seconda">
+                         <option value="SI">SI</option>
+                         <option value="NO">NO</option>
+                     </select>
+                 </div>
+                 
+                 <div class="col-md-4">
+                     <label class="form-label">Pastorizzato</label>
+                     <select class="form-select pastorizzato-torchiato">
+                         <option value="SI">SI</option>
+                         <option value="NO">NO</option>
+                     </select>
+                 </div>
+             </div>
+             
+             <!-- Tenore di polpa, Brix e Bio per ogni prodotto -->
+             <div class="row g-3 mt-3">
+                 <div class="col-md-4">
+                     <label class="form-label">Tenore Polpa Succo 1ª</label>
+                     <select class="form-select tenore-polpa-prima">
+                         <option value="STANDARD">STANDARD</option>
+                         <option value="LIMPIDO">LIMPIDO</option>
+                         <option value="SEMICLEAR">SEMICLEAR</option>
+                         <option value="1%">1%</option>
+                         <option value="2%">2%</option>
+                         <option value="3%">3%</option>
+                         <option value="6%">6%</option>
+                         <option value="ALTRO">ALTRO</option>
+                     </select>
+                     <input type="text" class="form-control mt-2 altro-tenore-prima hidden-field" placeholder="Specifica altro tenore">
+                     
+                     <label class="form-label mt-2">Brix</label>
+                     <select class="form-select brix-prima">
+                         <option value="NAT">NAT</option>
                          <option value="20">20</option>
                          <option value="32">32</option>
                          <option value="40">40</option>
@@ -771,6 +942,8 @@
          let lastCombinationSuppliers = '';
          let sumDetailsSeconda = {};
          let sumDetailsTorchiato = {};
+         let chartsInitialized = false;
+         let charts = {};
          
          // Inizializzazione data corrente e ultima revisione
          function initCurrentDate() {
@@ -798,10 +971,10 @@
          function calculateAutoYields(agrume) {
              const yields = {
                  'LIMONE': { prima: 30, seconda: 10, torchiato: 5 },
-                 'ARANCIA': { prima: 35, seconda: 12, torchiato: 6 },
-                 'MANDARINO': { prima: 42, seconda: 10, torchiato: 4 },
-                 'POMPELMO': { prima: 30, seconda: 15, torchiato: 6 },
-                 'BERGAMOTTO': { prima: 30, seconda: 8, torchiato: 3 }
+                 'ARANCIA': { prima: 35, seconda: 0, torchiato: 6 },
+                 'MANDARINO': { prima: 42, seconda: 0, torchiato: 4 },
+                 'POMPELMO': { prima: 30, seconda: 0, torchiato: 6 },
+                 'BERGAMOTTO': { prima: 30, seconda: 0, torchiato: 3 }
              };
              return yields[agrume] || { prima: 45, seconda: 10, torchiato: 4 };
          }
@@ -1160,7 +1333,7 @@
              });
              
              // Gestione bio status per colori destinazione
-             supplierElement.find('.bio-prima').change(function() {
+       supplierElement.find('.bio-prima').change(function() {
                  updateDestinationColors(supplierElement);
              });
              
@@ -1487,6 +1660,271 @@
              });
          }
          
+         // Gestione statistiche interattive
+         function openStatistics() {
+             $('#stats-modal').fadeIn();
+             if (!chartsInitialized) {
+                 initializeCharts();
+                 chartsInitialized = true;
+             }
+             updateStatistics();
+         }
+         
+         function closeStatistics() {
+             $('#stats-modal').fadeOut();
+         }
+         
+         function initializeCharts() {
+             // Inizializza i grafici
+             const ctxFornitori = document.getElementById('chartFornitori').getContext('2d');
+             const ctxRese = document.getElementById('chartRese').getContext('2d');
+             const ctxCertificazioni = document.getElementById('chartCertificazioni').getContext('2d');
+             const ctxTimeline = document.getElementById('chartTimeline').getContext('2d');
+             const ctxEfficienza = document.getElementById('chartEfficienza').getContext('2d');
+             const ctxDestinazioni = document.getElementById('chartDestinazioni').getContext('2d');
+             
+             // Grafico Fornitori
+             charts.fornitori = new Chart(ctxFornitori, {
+                 type: 'pie',
+                 data: {
+                     labels: [],
+                     datasets: [{
+                         label: 'Quantità trasformata (kg)',
+                         data: [],
+                         backgroundColor: [
+                             '#FF6384',
+                             '#36A2EB',
+                             '#FFCE56',
+                             '#4BC0C0',
+                             '#9966FF',
+                             '#FF9F40'
+                         ]
+                     }]
+                 },
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     plugins: {
+                         legend: {
+                             position: 'bottom'
+                         }
+                     }
+                 }
+             });
+             
+             // Grafico Rese
+             charts.rese = new Chart(ctxRese, {
+                 type: 'bar',
+                 data: {
+                     labels: ['Succo 1ª', 'Succo 2ª', 'Torchiato'],
+                     datasets: [{
+                         label: 'Resa Media %',
+                         data: [],
+                         backgroundColor: ['#28a745', '#ffc107', '#17a2b8']
+                     }]
+                 },
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     scales: {
+                         y: {
+                             beginAtZero: true,
+                             max: 50
+                         }
+                     }
+                 }
+             });
+             
+             // Grafico Certificazioni
+             charts.certificazioni = new Chart(ctxCertificazioni, {
+                 type: 'doughnut',
+                 data: {
+                     labels: [],
+                     datasets: [{
+                         data: [],
+                         backgroundColor: [
+                             '#dc3545',
+                             '#28a745',
+                             '#ffc107',
+                             '#17a2b8',
+                             '#6c757d'
+                         ]
+                     }]
+                 },
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false
+                 }
+             });
+             
+             // Grafico Timeline
+             charts.timeline = new Chart(ctxTimeline, {
+                 type: 'line',
+                 data: {
+                     labels: [],
+                     datasets: [{
+                         label: 'Produzione oraria (kg)',
+                         data: [],
+                         borderColor: '#2a5298',
+                         fill: false,
+                         tension: 0.1
+                     }]
+                 },
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     scales: {
+                         y: {
+                             beginAtZero: true
+                         }
+                     }
+                 }
+             });
+             
+             // Grafico Efficienza Linee
+             charts.efficienza = new Chart(ctxEfficienza, {
+                 type: 'radar',
+                 data: {
+                     labels: [],
+                     datasets: [{
+                         label: 'Efficienza %',
+                         data: [],
+                         backgroundColor: 'rgba(42, 82, 152, 0.2)',
+                         borderColor: '#2a5298',
+                         pointBackgroundColor: '#2a5298'
+                     }]
+                 },
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     scales: {
+                         r: {
+                             beginAtZero: true,
+                             max: 100
+                         }
+                     }
+                 }
+             });
+             
+             // Grafico Destinazioni
+             charts.destinazioni = new Chart(ctxDestinazioni, {
+                 type: 'bar',
+                 data: {
+                     labels: [],
+                     datasets: []
+                 },
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     scales: {
+                         x: {
+                             stacked: true
+                         },
+                         y: {
+                             stacked: true,
+                             beginAtZero: true
+                         }
+                     }
+                 }
+             });
+         }
+         
+         function updateStatistics() {
+             const programData = collectProgramData();
+             
+             // Aggiorna sommario
+             const summaryHtml = `
+                 <div class="summary-item">
+                     <div class="summary-value">${programData.fornitori.length}</div>
+                     <div class="summary-label">Fornitori Totali</div>
+                 </div>
+                 <div class="summary-item">
+                     <div class="summary-value">${programData.trasformataTotale.toLocaleString()}</div>
+                     <div class="summary-label">Kg Trasformati</div>
+                 </div>
+                 <div class="summary-item">
+                     <div class="summary-value">${programData.giacenzaTotale.toLocaleString()}</div>
+                     <div class="summary-label">Kg Giacenza</div>
+                 </div>
+                 <div class="summary-item">
+                     <div class="summary-value">${calculateTotalYield(programData).toFixed(1)}%</div>
+                     <div class="summary-label">Resa Media Totale</div>
+                 </div>
+             `;
+             $('#stats-summary').html(summaryHtml);
+             
+             // Aggiorna grafici
+             updateChartsData(programData);
+         }
+         
+         function calculateTotalYield(data) {
+             let totalYield = 0;
+             let count = 0;
+             
+             data.fornitori.forEach(f => {
+                 if (f.quantitaTrasformata > 0) {
+                     totalYield += f.rese.prima + f.rese.seconda + f.rese.torchiato;
+                     count++;
+                 }
+             });
+             
+             return count > 0 ? totalYield / count : 0;
+         }
+         
+         function updateChartsData(data) {
+             // Aggiorna grafico fornitori
+             const fornitoriLabels = [];
+             const fornitoriData = [];
+             
+             data.fornitori.forEach(f => {
+                 const nome = f.nome === 'ALTRO' ? f.altroNome : f.nome;
+                 if (nome && f.quantitaTrasformata > 0) {
+                     fornitoriLabels.push(nome);
+                     fornitoriData.push(f.quantitaTrasformata);
+                 }
+             });
+             
+             charts.fornitori.data.labels = fornitoriLabels;
+             charts.fornitori.data.datasets[0].data = fornitoriData;
+             charts.fornitori.update();
+             
+             // Aggiorna grafico rese medie
+             let resePrima = 0, reseSeconda = 0, reseTorchiato = 0;
+             let countRese = 0;
+             
+             data.fornitori.forEach(f => {
+                 if (f.quantitaTrasformata > 0) {
+                     resePrima += f.rese.prima;
+                     reseSeconda += f.rese.seconda;
+                     reseTorchiato += f.rese.torchiato;
+                     countRese++;
+                 }
+             });
+             
+             if (countRese > 0) {
+                 charts.rese.data.datasets[0].data = [
+                     (resePrima / countRese).toFixed(1),
+                     (reseSeconda / countRese).toFixed(1),
+                     (reseTorchiato / countRese).toFixed(1)
+                 ];
+             }
+             charts.rese.update();
+             
+             // Aggiorna grafico certificazioni
+             const certMap = {};
+             data.fornitori.forEach(f => {
+                 if (f.certificazione) {
+                     certMap[f.certificazione] = (certMap[f.certificazione] || 0) + 1;
+                 }
+             });
+             
+             charts.certificazioni.data.labels = Object.keys(certMap);
+             charts.certificazioni.data.datasets[0].data = Object.values(certMap);
+             charts.certificazioni.update();
+             
+             // Altri aggiornamenti grafici...
+         }
+         
          // Eventi principali
          $('#tipo-agrume-giornaliero').change(function() {
              const agrume = $(this).val();
@@ -1522,6 +1960,23 @@
                  return;
              }
              addSupplier();
+         });
+         
+         // Pulsante apri statistiche
+         $('#apri-statistiche').click(function() {
+             openStatistics();
+         });
+         
+         // Chiudi modal statistiche
+         $('.close-stats').click(function() {
+             closeStatistics();
+         });
+         
+         // Chiudi modal cliccando fuori
+         $(window).click(function(event) {
+             if (event.target.id === 'stats-modal') {
+                 closeStatistics();
+             }
          });
          
          // Salvataggio programma
@@ -1597,7 +2052,7 @@
                      giacenza: parseFloat($(this).find('.giacenza-fornitore').val()) || 0,
                      certificazione: $(this).find('.certificazione-prodotto').val(),
                      altraCertificazione: $(this).find('.altra-certificazione').val(),
-                     lineaTrasformazione: $(this).find('.linea-trasformazione').val(),
+                   lineaTrasformazione: $(this).find('.linea-trasformazione').val(),
                      portataImpianto: parseFloat($(this).find('.portata-impianto').val()) || 0,
                      orarioInizio: $(this).find('.orario-inizio').val(),
                      orarioFineDisplay: $(this).find('.orario-fine-display').html(),
@@ -1666,7 +2121,7 @@
              generatePrintPreview(programData);
          });
          
-         // Generazione anteprima stampa VERTICALE E MODERNA
+         // Generazione anteprima stampa MODIFICATA
          function generatePrintPreview(data) {
              const printWindow = window.open('', '_blank');
              let printContent = `
@@ -1825,7 +2280,7 @@
                              border-radius: 8px;
                              margin-bottom: 20px;
                              display: flex;
-                             justify-content: space-between;
+                             justify-content: space-around;
                              align-items: center;
                          }
                          
@@ -1930,10 +2385,12 @@
                          
                          .sum-info {
                              background: #fff3cd;
-                             padding: 5px 10px;
+                             padding: 8px 12px;
                              border-radius: 5px;
-                             font-size: 11px;
+                             font-size: 12px;
                              margin-top: 5px;
+                             color: #856404;
+                             font-weight: 600;
                          }
                          
                          .combination-info {
@@ -2009,7 +2466,8 @@
              data.fornitori.forEach((fornitore, index) => {
                  const nomeFornitore = fornitore.nome === 'ALTRO' ? fornitore.altroNome : fornitore.nome;
                  const isBio = ['BIO EU', 'BIO DEM', 'BIO NTD'].includes(fornitore.certificazione);
-                 const bioClass = isBio ? 'bio' : '';const bioStatusPrima = fornitore.caratteristicheProdotti.prima.bio;
+                 const bioClass = isBio ? 'bio' : '';
+                 const bioStatusPrima = fornitore.caratteristicheProdotti.prima.bio;
                  const primaClass = isBio ? (bioStatusPrima === 'DECLASSATO' ? 'bio-black' : 'bio-red') : '';
                  
                  const orarioFineClean = fornitore.orarioFineDisplay ? 
@@ -2034,10 +2492,6 @@
                                  <div class="time-item">
                                      <span class="time-label">Fine</span>
                                      <span class="time-value">${orarioFineClean || '-'}</span>
-                                 </div>
-                                 <div class="time-item">
-                                     <span class="time-label">Durata</span>
-                                     <span class="time-value">${fornitore.durataLavorazione || '-'}</span>
                                  </div>
                              </div>
                              
@@ -2087,90 +2541,124 @@
                  
                  printContent += `</div>`;
                  
-                 // Succo 2ª
-                 printContent += `
-                     <div class="product-item">
-                         <div class="product-name">
-                             <span>Succo 2ª</span>
-                             <span class="product-quantity">${fornitore.quantitaProdotti.seconda} kg</span>
-                         </div>
-                 `;
-                 
-                 if (fornitore.isAutoSum.seconda && data.sumDetailsSeconda && data.sumDetailsSeconda.length > 1) {
-                     const detailsText = formatSumDetails(data.sumDetailsSeconda, 'seconda');
-                     printContent += `<div class="sum-info">Somma totale: ${detailsText}</div>`;
+                 // Succo 2ª - Mostra solo totale se è l'ultimo fornitore e c'è auto-sum
+                 if (fornitore.isAutoSum.seconda && index === data.fornitori.length - 1) {
+                     printContent += `
+                         <div class="product-item">
+                             <div class="product-name">
+                                 <span>Succo 2ª - TOTALE FORNITORI</span>
+                                 <span class="product-quantity">${fornitore.quantitaProdotti.seconda} kg</span>
+                             </div>
+                     `;
+                     
+                     if (data.sumDetailsSeconda && data.sumDetailsSeconda.length > 1) {
+                         const detailsText = formatSumDetails(data.sumDetailsSeconda, 'seconda');
+                         printContent += `<div class="sum-info">Dettaglio: ${detailsText}</div>`;
+                     }
+                 } else if (!fornitore.isAutoSum.seconda && fornitore.quantitaProdotti.seconda > 0) {
+                     // Mostra normale solo se non è auto-sum
+                     printContent += `
+                         <div class="product-item">
+                             <div class="product-name">
+                                 <span>Succo 2ª</span>
+                                 <span class="product-quantity">${fornitore.quantitaProdotti.seconda} kg</span>
+                             </div>
+                     `;
+                 } else {
+                     // Non mostrare nulla per fornitori con auto-sum (tranne l'ultimo)
+                     printContent += '<!-- Succo 2ª incluso nel totale finale -->';
                  }
                  
-                 printContent += `
-                         <div class="product-details">
-                             <div class="detail-item">
-                                 <span class="detail-label">Tenore Polpa</span>
-                                 <span class="detail-value">${fornitore.caratteristicheProdotti.seconda.tenorePolpa || '-'}</span>
+                 if ((!fornitore.isAutoSum.seconda && fornitore.quantitaProdotti.seconda > 0) || 
+                     (fornitore.isAutoSum.seconda && index === data.fornitori.length - 1)) {
+                     printContent += `
+                             <div class="product-details">
+                                 <div class="detail-item">
+                                     <span class="detail-label">Tenore Polpa</span>
+                                     <span class="detail-value">${fornitore.caratteristicheProdotti.seconda.tenorePolpa || '-'}</span>
+                                 </div>
+                                 <div class="detail-item">
+                                     <span class="detail-label">Brix</span>
+                                     <span class="detail-value">${fornitore.caratteristicheProdotti.seconda.brix || '-'}</span>
+                                 </div>
+                                 <div class="detail-item">
+                                     <span class="detail-label">Pastorizzato</span>
+                                     <span class="detail-value">${fornitore.caratteristicheProdotti.seconda.pastorizzato || '-'}</span>
+                                 </div>
+                                 <div class="detail-item">
+                                     <span class="detail-label">Conservato</span>
+                                     <span class="detail-value">${fornitore.caratteristicheProdotti.seconda.conservato || '-'}</span>
+                                 </div>
                              </div>
-                             <div class="detail-item">
-                                 <span class="detail-label">Brix</span>
-                                 <span class="detail-value">${fornitore.caratteristicheProdotti.seconda.brix || '-'}</span>
+                             <div class="destination-info">
+                                 <span class="destination-label">Destinazione:</span> ${fornitore.destinazioni.seconda || 'Non specificata'}
                              </div>
-                             <div class="detail-item">
-                                 <span class="detail-label">Pastorizzato</span>
-                                 <span class="detail-value">${fornitore.caratteristicheProdotti.seconda.pastorizzato || '-'}</span>
-                             </div>
-                             <div class="detail-item">
-                                 <span class="detail-label">Conservato</span>
-                                 <span class="detail-value">${fornitore.caratteristicheProdotti.seconda.conservato || '-'}</span>
-                             </div>
-                         </div>
-                         <div class="destination-info">
-                             <span class="destination-label">Destinazione:</span> ${fornitore.destinazioni.seconda || 'Non specificata'}
-                         </div>
-                 `;
-                 
-                 if (fornitore.caratteristicheProdotti.seconda.note) {
-                     printContent += `<div class="notes">Note: ${fornitore.caratteristicheProdotti.seconda.note}</div>`;
+                     `;
+                     
+                     if (fornitore.caratteristicheProdotti.seconda.note) {
+                         printContent += `<div class="notes">Note: ${fornitore.caratteristicheProdotti.seconda.note}</div>`;
+                     }
+                     
+                     printContent += `</div>`;
                  }
                  
-                 printContent += `</div>`;
-                 
-                 // Torchiato
-                 printContent += `
-                     <div class="product-item">
-                         <div class="product-name">
-                             <span>Torchiato</span>
-                             <span class="product-quantity">${fornitore.quantitaProdotti.torchiato} kg</span>
-                         </div>
-                 `;
-                 
-                 if (fornitore.isAutoSum.torchiato && data.sumDetailsTorchiato && data.sumDetailsTorchiato.length > 1) {
-                     const detailsText = formatSumDetails(data.sumDetailsTorchiato, 'torchiato');
-                     printContent += `<div class="sum-info">Somma totale: ${detailsText}</div>`;
+                 // Torchiato - Stessa logica del succo 2ª
+                 if (fornitore.isAutoSum.torchiato && index === data.fornitori.length - 1) {
+                     printContent += `
+                         <div class="product-item">
+                             <div class="product-name">
+                                 <span>Torchiato - TOTALE FORNITORI</span>
+                                 <span class="product-quantity">${fornitore.quantitaProdotti.torchiato} kg</span>
+                             </div>
+                     `;
+                     
+                     if (data.sumDetailsTorchiato && data.sumDetailsTorchiato.length > 1) {
+                         const detailsText = formatSumDetails(data.sumDetailsTorchiato, 'torchiato');
+                         printContent += `<div class="sum-info">Dettaglio: ${detailsText}</div>`;
+                     }
+                 } else if (!fornitore.isAutoSum.torchiato && fornitore.quantitaProdotti.torchiato > 0) {
+                     printContent += `
+                         <div class="product-item">
+                             <div class="product-name">
+                                 <span>Torchiato</span>
+                                 <span class="product-quantity">${fornitore.quantitaProdotti.torchiato} kg</span>
+                             </div>
+                     `;
+                 } else {
+                     printContent += '<!-- Torchiato incluso nel totale finale -->';
                  }
                  
-                 printContent += `
-                         <div class="product-details">
-                             <div class="detail-item">
-                                 <span class="detail-label">Tenore Polpa</span>
-                                 <span class="detail-value">${fornitore.caratteristicheProdotti.torchiato.tenorePolpa || '-'}</span>
+                 if ((!fornitore.isAutoSum.torchiato && fornitore.quantitaProdotti.torchiato > 0) || 
+                     (fornitore.isAutoSum.torchiato && index === data.fornitori.length - 1)) {
+                     printContent += `
+                             <div class="product-details">
+                                 <div class="detail-item">
+                                     <span class="detail-label">Tenore Polpa</span>
+                                     <span class="detail-value">${fornitore.caratteristicheProdotti.torchiato.tenorePolpa || '-'}</span>
+                                 </div>
+                                 <div class="detail-item">
+                                     <span class="detail-label">Brix</span>
+                                     <span class="detail-value">${fornitore.caratteristicheProdotti.torchiato.brix || '-'}</span>
+                                 </div>
+                                 <div class="detail-item">
+                                     <span class="detail-label">Pastorizzato</span>
+                                     <span class="detail-value">${fornitore.caratteristicheProdotti.torchiato.pastorizzato || '-'}</span>
+                                 </div>
+                                 <div class="detail-item">
+                                     <span class="detail-label">Conservato</span>
+                                     <span class="detail-value">${fornitore.caratteristicheProdotti.torchiato.conservato || '-'}</span>
+                                 </div>
                              </div>
-                             <div class="detail-item">
-                                 <span class="detail-label">Brix</span>
-                                 <span class="detail-value">${fornitore.caratteristicheProdotti.torchiato.brix || '-'}</span>
+                             <div class="destination-info">
+                                 <span class="destination-label">Destinazione:</span> ${fornitore.destinazioni.torchiato || 'Non specificata'}
                              </div>
-                             <div class="detail-item">
-                                 <span class="detail-label">Pastorizzato</span>
-                                 <span class="detail-value">${fornitore.caratteristicheProdotti.torchiato.pastorizzato || '-'}</span>
-                             </div>
-                             <div class="detail-item">
-                                 <span class="detail-label">Conservato</span>
-                                 <span class="detail-value">${fornitore.caratteristicheProdotti.torchiato.conservato || '-'}</span>
-                             </div>
-                         </div>
-                         <div class="destination-info">
-                             <span class="destination-label">Destinazione:</span> ${fornitore.destinazioni.torchiato || 'Non specificata'}
-                         </div>
-                 `;
-                 
-                 if (fornitore.caratteristicheProdotti.torchiato.note) {
-                     printContent += `<div class="notes">Note: ${fornitore.caratteristicheProdotti.torchiato.note}</div>`;
+                     `;
+                     
+                     if (fornitore.caratteristicheProdotti.torchiato.note) {
+                         printContent += `<div class="notes">Note: ${fornitore.caratteristicheProdotti.torchiato.note}</div>`;
+                     }
+                     
+                     printContent += `</div>`;
                  }
                  
                  printContent += `
