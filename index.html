@@ -1144,33 +1144,49 @@
              }
          }
          
-         // Aggiorna opzioni select per combinazioni fornitori
-         function updateCombinazioneOptions() {
-             const select = $('#combinazione-fornitori');
-             
-             select.empty().append('<option value="">Seleziona combinazione</option>');
-             
-             const fornitori = [];
-             $('.supplier-row').each(function() {
-                 const index = $(this).data('supplier-index');
-                 const fornitore = $(this).find('.nome-fornitore').val() || '';
-                 const altroFornitore = $(this).find('.altro-fornitore').val();
-                 const nomeFornitore = fornitore === 'ALTRO' ? altroFornitore : fornitore;
-                 
-                 if (nomeFornitore) {
-                     fornitori.push({ index: index, nome: nomeFornitore });
-                 }
-             });
-             
-             // Genera combinazioni possibili
-             for (let i = 0; i < fornitori.length; i++) {
-                 for (let j = i + 1; j < fornitori.length; j++) {
-                     const combo = `${fornitori[i].index},${fornitori[j].index}`;
-                     const label = `${fornitori[i].nome} + ${fornitori[j].nome}`;
-                     select.append(`<option value="${combo}">${label}</option>`);
-                 }
-             }
-             
+// Aggiorna opzioni select per combinazioni fornitori
+function updateCombinazioneOptions() {
+    const select = $('#combinazione-fornitori');
+    
+    select.empty().append('<option value="">Seleziona combinazione</option>');
+    
+    const fornitori = [];
+    $('.supplier-row').each(function() {
+        const index = $(this).data('supplier-index');
+        const fornitore = $(this).find('.nome-fornitore').val() || '';
+        const altroFornitore = $(this).find('.altro-fornitore').val();
+        const nomeFornitore = fornitore === 'ALTRO' ? altroFornitore : fornitore;
+        const certificazione = $(this).find('.certificazione-prodotto').val() || '';
+        const altraCertificazione = $(this).find('.altra-certificazione').val();
+        const nomeCertificazione = certificazione === 'ALTRO' ? altraCertificazione : certificazione;
+        const linea = $(this).find('.linea-trasformazione').val() || '';
+        
+        if (nomeFornitore) {
+            fornitori.push({ 
+                index: index, 
+                nome: nomeFornitore,
+                certificazione: nomeCertificazione,
+                linea: linea
+            });
+        }
+    });
+    
+    // Genera combinazioni possibili
+    for (let i = 0; i < fornitori.length; i++) {
+        for (let j = i + 1; j < fornitori.length; j++) {
+            const combo = `${fornitori[i].index},${fornitori[j].index}`;
+            const label = `${fornitori[i].nome} (${fornitori[i].certificazione}, ${fornitori[i].linea}) + ${fornitori[j].nome} (${fornitori[j].certificazione}, ${fornitori[j].linea})`;
+            select.append(`<option value="${combo}">${label}</option>`);
+        }
+    }
+    
+    // Combinazione di tutti i fornitori se ce ne sono più di 2
+    if (fornitori.length > 2) {
+        const allIndexes = fornitori.map(f => f.index).join(',');
+        const allNames = fornitori.map(f => `${f.nome} (${f.certificazione}, ${f.linea})`).join(' + ');
+        select.append(`<option value="${allIndexes}">Tutti: ${allNames}</option>`);
+    }
+}             
              // Combinazione di tutti i fornitori se ce ne sono più di 2
              if (fornitori.length > 2) {
                  const allIndexes = fornitori.map(f => f.index).join(',');
