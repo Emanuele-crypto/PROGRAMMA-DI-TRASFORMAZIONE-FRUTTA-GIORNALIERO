@@ -1204,27 +1204,72 @@
              return names.join(' + ');
          }
          
-         // Applica combinazione sostituendo quantità succo 1ª nell'ultimo fornitore incluso
-         function applyCombination() {
-             const selectedCombo = $('#combinazione-fornitori').val();
-             if (!selectedCombo) {
-                 alert('Seleziona prima una combinazione di fornitori');
-                 return;
-             }
-             
-             const indexes = selectedCombo.split(',');
-             let totale = 0;
-             
-             indexes.forEach(index => {
-                 const supplierRow = $(`[data-supplier-index="${index}"]`);
-                 const quantitaTrasformata = parseFloat(supplierRow.find('.quantita-trasformata').val()) || 0;
-                 const resaPrima = parseFloat(supplierRow.find('.resa-prima').val()) || 0;
-                 
-                 if (quantitaTrasformata > 0) {
-                     totale += (quantitaTrasformata * resaPrima / 100);
-                 }
-             });
-             
+// Applica combinazione sostituendo quantità succo 1ª nell'ultimo fornitore incluso
+function applyCombination() {
+    const selectedCombo = $('#combinazione-fornitori').val();
+    if (!selectedCombo) {
+        alert('Seleziona prima una combinazione di fornitori');
+        return;
+    }
+    
+    const indexes = selectedCombo.split(',');
+    let totale = 0;
+    let combinationDetails = []; // Array per salvare i dettagli completi
+    
+    indexes.forEach(index => {
+        const supplierRow = $(`[data-supplier-index="${index}"]`);
+        
+        // Raccogli informazioni complete del fornitore
+        const fornitore = supplierRow.find('.nome-fornitore').val() || '';
+        const altroFornitore = supplierRow.find('.altro-fornitore').val();
+        const nomeFornitore = fornitore === 'ALTRO' ? altroFornitore : fornitore;
+        const certificazione = supplierRow.find('.certificazione-prodotto').val() || 'N/D';
+        const lineaTrasformazione = supplierRow.find('.linea-trasformazione').val() || 'N/D';
+        
+        const quantitaTrasformata = parseFloat(supplierRow.find('.quantita-trasformata').val()) || 0;
+        const resaPrima = parseFloat(supplierRow.find('.resa-prima').val()) || 0;
+        
+        if (quantitaTrasformata > 0) {
+            totale += (quantitaTrasformata * resaPrima / 100);
+            
+            // Aggiungi dettagli completi del fornitore
+            combinationDetails.push({
+                nome: nomeFornitore,
+                certificazione: certificazione,
+                linea: lineaTrasformazione,
+                quantita: quantitaTrasformata,
+                resa: resaPrima,
+                risultato: (quantitaTrasformata * resaPrima / 100).toFixed(1)
+            });
+        }
+    });
+    
+    const lastSupplierInCombo = getLastSupplierInCombination(selectedCombo);
+    if (lastSupplierInCombo.length > 0) {
+        const quantitaPrimaField = lastSupplierInCombo.find('.quantita-prima');
+        quantitaPrimaField.val(totale.toFixed(1));
+        quantitaPrimaField.addClass('combination-result');
+        
+        // Crea testo dettagliato della combinazione
+        const detailedCombination = combinationDetails.map(detail => 
+            `${detail.nome} [${detail.certificazione}|${detail.linea}] = ${detail.risultato}kg`
+        ).join(' + ');
+        
+        // Salva anche la versione semplice per compatibilità
+        lastCombinationSuppliers = combinationDetails.map(detail => detail.nome).join(' + ');
+        
+        const noteElement = lastSupplierInCombo.find('.combination-note');
+        if (noteElement.length === 0) {
+            quantitaPrimaField.after(`<small class="combination-note text-warning d-block" style="font-size: 11px; line-height: 1.2;">Valore da combinazione fornitori:<br/>${detailedCombination}</small>`);
+        } else {
+            noteElement.html(`Valore da combinazione fornitori:<br/>${detailedCombination}`);
+        }
+        
+        alert(`Combinazione applicata! Quantità succo 1ª dell'ultimo fornitore incluso aggiornata a ${totale.toFixed(1)} kg\n\nDettaglio combinazione:\n${combinationDetails.map(d => `${d.nome} [${d.certificazione}|${d.linea}]: ${d.quantita}kg × ${d.resa}% = ${d.risultato}kg`).join('\n')}`);
+    } else {
+        alert('Nessun fornitore disponibile per applicare la combinazione');
+    }
+}             
              const lastSupplierInCombo = getLastSupplierInCombination(selectedCombo);
              if (lastSupplierInCombo.length > 0) {
                  const quantitaPrimaField = lastSupplierInCombo.find('.quantita-prima');
