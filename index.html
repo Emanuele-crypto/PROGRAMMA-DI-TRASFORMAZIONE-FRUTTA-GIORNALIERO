@@ -473,10 +473,6 @@
                          <th>Inizio</th>
                          <th>Fine</th>
                          <th>Durata</th>
-                         <th>Succo 1ª (kg)</th>
-                         <th>Pastorizzato</th>
-                         <th>Destinazione</th>
-                         <th>Bio</th>
                          <th>Azioni</th>
                      </tr>
                  </thead>
@@ -718,7 +714,8 @@
                      <select class="form-select destinazione-prima" multiple>
                          <option value="NAT IN TINI">NAT IN TINI</option>
                          <option value="PET 100">PET 100</option>
-                        <option value="PET 200">PET 200</option>
+                         <option value="PET 200">
+                          <option value="PET 200">PET 200</option>
                         <option value="PET 480">PET 480</option>
                         <option value="ACMA">ACMA</option>
                         <option value="REX">REX</option>
@@ -960,7 +957,7 @@
         let supplierCount = 0;
         let programData = {};
         let lastCombinationSuppliers = '';
-        let combinationDetails = [];
+        let combinationDetails = []; // Array per salvare i dettagli completi delle combinazioni
         let sumDetailsSeconda = {};
         let sumDetailsTorchiato = {};
         let chartsInitialized = false;
@@ -1079,6 +1076,7 @@
             const lastSupplier = getLastSupplier();
             
             if (suppliers.length === 1) {
+                // Con un solo fornitore, calcola normalmente
                 const quantitaTrasformata = parseFloat(lastSupplier.find('.quantita-trasformata').val()) || 0;
                 const resaSeconda = parseFloat(lastSupplier.find('.resa-seconda').val()) || 0;
                 const resaTorchiato = parseFloat(lastSupplier.find('.resa-torchiato').val()) || 0;
@@ -1091,8 +1089,10 @@
                 lastSupplier.find('.seconda-details').html('');
                 lastSupplier.find('.torchiato-details').html('');
                 
+                // Rimuovi gli stili da tutti
                 suppliers.find('.quantita-seconda, .quantita-torchiato').removeClass('auto-sum-field');
             } else {
+                // Con più fornitori, calcola le somme
                 let totalSeconda = 0;
                 let totalTorchiato = 0;
                 
@@ -1107,9 +1107,11 @@
                     }
                 });
                 
+                // Rimuovi gli stili da tutti i fornitori
                 suppliers.find('.quantita-seconda, .quantita-torchiato').removeClass('auto-sum-field');
                 suppliers.find('.seconda-details, .torchiato-details').html('');
                 
+                // Calcola i valori individuali per gli altri fornitori
                 suppliers.not(lastSupplier).each(function() {
                     const quantitaTrasformata = parseFloat($(this).find('.quantita-trasformata').val()) || 0;
                     const resaSeconda = parseFloat($(this).find('.resa-seconda').val()) || 0;
@@ -1122,9 +1124,11 @@
                     $(this).find('.quantita-torchiato').val(qtaTorchiato);
                 });
                 
+                // Applica le somme solo all'ultimo fornitore
                 lastSupplier.find('.quantita-seconda').val(totalSeconda.toFixed(1)).addClass('auto-sum-field');
                 lastSupplier.find('.quantita-torchiato').val(totalTorchiato.toFixed(1)).addClass('auto-sum-field');
                 
+                // Aggiungi dettagli somma
                 const details = calculateSumDetails();
                 const secondaDetails = formatSumDetails(details, 'seconda');
                 const torchiatoDetails = formatSumDetails(details, 'torchiato');
@@ -1136,12 +1140,13 @@
                     lastSupplier.find('.torchiato-details').html(`<strong>Dettaglio:</strong> ${torchiatoDetails}`);
                 }
                 
+                // Salva i dettagli globalmente
                 sumDetailsSeconda = details;
                 sumDetailsTorchiato = details;
             }
         }
         
-        // Aggiorna opzioni select per combinazioni fornitori
+        // Aggiorna opzioni select per combinazioni fornitori - MODIFICATA per includere certificazione e linea
         function updateCombinazioneOptions() {
             const select = $('#combinazione-fornitori');
             
@@ -1166,6 +1171,7 @@
                 }
             });
             
+            // Genera combinazioni possibili
             for (let i = 0; i < fornitori.length; i++) {
                 for (let j = i + 1; j < fornitori.length; j++) {
                     const combo = `${fornitori[i].index},${fornitori[j].index}`;
@@ -1174,6 +1180,7 @@
                 }
             }
             
+            // Combinazione di tutti i fornitori se ce ne sono più di 2
             if (fornitori.length > 2) {
                 const allIndexes = fornitori.map(f => f.index).join(',');
                 const allNames = fornitori.map(f => `${f.nome} [${f.certificazione}|${f.linea}]`).join(' + ');
@@ -1199,7 +1206,7 @@
             return names.join(' + ');
         }
         
-        // Applica combinazione sostituendo quantità succo 1ª nell'ultimo fornitore incluso
+        // Applica combinazione sostituendo quantità succo 1ª nell'ultimo fornitore incluso - CORRETTA
         function applyCombination() {
             const selectedCombo = $('#combinazione-fornitori').val();
             if (!selectedCombo) {
@@ -1209,11 +1216,12 @@
             
             const indexes = selectedCombo.split(',');
             let totale = 0;
-            combinationDetails = [];
+            combinationDetails = []; // Reset array dettagli combinazioni
             
             indexes.forEach(index => {
                 const supplierRow = $(`[data-supplier-index="${index}"]`);
                 
+                // Raccogli informazioni complete del fornitore
                 const fornitore = supplierRow.find('.nome-fornitore').val() || '';
                 const altroFornitore = supplierRow.find('.altro-fornitore').val();
                 const nomeFornitore = fornitore === 'ALTRO' ? altroFornitore : fornitore;
@@ -1226,6 +1234,7 @@
                 if (quantitaTrasformata > 0) {
                     totale += (quantitaTrasformata * resaPrima / 100);
                     
+                    // Aggiungi dettagli completi del fornitore
                     combinationDetails.push({
                         nome: nomeFornitore,
                         certificazione: certificazione,
@@ -1243,10 +1252,12 @@
                 quantitaPrimaField.val(totale.toFixed(1));
                 quantitaPrimaField.addClass('combination-result');
                 
+                // Crea testo dettagliato della combinazione
                 const detailedCombination = combinationDetails.map(detail => 
                     `${detail.nome} [${detail.certificazione}|${detail.linea}] = ${detail.risultato}kg`
                 ).join(' + ');
                 
+                // Salva anche la versione semplice per compatibilità
                 lastCombinationSuppliers = combinationDetails.map(detail => detail.nome).join(' + ');
                 
                 const noteElement = lastSupplierInCombo.find('.combination-note');
@@ -1268,13 +1279,21 @@
                 const quantitaPrimaField = $(this).find('.quantita-prima');
                 
                 if (quantitaPrimaField.hasClass('combination-result')) {
+                    // Rimuovi la classe combination-result
                     quantitaPrimaField.removeClass('combination-result');
+                    
+                    // Rimuovi la nota di combinazione
                     $(this).find('.combination-note').remove();
+                    
+                    // Ricalcola il valore basandosi sulla resa
                     calculateYieldQuantities($(this));
                 }
             });
             
+            // Reset del select combinazioni
             $('#combinazione-fornitori').val('');
+            
+            // Reset delle variabili memorizzate
             lastCombinationSuppliers = '';
             combinationDetails = [];
             
@@ -1335,7 +1354,7 @@
             updateAutoSums();
         }
         
-        // Eventi per ogni fornitore
+        // Eventi per ogni fornitore - CORRETTA per aggiornare combinazioni
         function attachSupplierEvents(supplierElement) {
             const index = supplierElement.data('supplier-index');
             
@@ -1353,7 +1372,7 @@
             
             // Gestione campo "ALTRO" per fornitore (altro fornitore)
             supplierElement.find('.altro-fornitore').on('input', function() {
-                updateCombinazioneOptions();
+                updateCombinazioneOptions(); // Aggiunto per aggiornare quando si inserisce il nome custom
             });
             
             // Gestione certificazione e colori
@@ -1370,18 +1389,18 @@
                 updateDestinationColors(supplierElement);
                 updateBioStyles(supplierElement);
                 updateSummaryTable();
-                updateCombinazioneOptions();
+                updateCombinazioneOptions(); // Aggiornamento combinazioni quando cambia certificazione
             });
             
             // Gestione altra certificazione
             supplierElement.find('.altra-certificazione').on('input', function() {
-                updateCombinazioneOptions();
+                updateCombinazioneOptions(); // Aggiunto per aggiornare quando si inserisce certificazione custom
             });
             
             // Gestione linea di trasformazione
             supplierElement.find('.linea-trasformazione').change(function() {
                 updateBioStyles(supplierElement);
-                updateCombinazioneOptions();
+                updateCombinazioneOptions(); // Aggiornamento combinazioni quando cambia linea
             });
             
             // Gestione campo "ALTRO" per varietà
@@ -1398,7 +1417,6 @@
             // Gestione bio status per colori destinazione
             supplierElement.find('.bio-prima').change(function() {
                 updateDestinationColors(supplierElement);
-                updateSummaryTable();
             });
             
             // Gestione campi "ALTRO" per tenore polpa
@@ -1460,8 +1478,6 @@
                 } else {
                     altroField.addClass('hidden-field').val('');
                 }
-                
-                updateSummaryTable();
             });
             
             // Gestione menu concentrato e altro destinazioni per seconda
@@ -1480,11 +1496,9 @@
                     bxField.addClass('hidden-field').val('');
                     altroField.addClass('hidden-field').val('');
                 }
-                
-                updateSummaryTable();
             });
             
-            // Gestione menu destinazioni per torchiato
+            // Gestione menu destinazioni per torchiato (SENZA bx-concentrato)
             supplierElement.find('.destinazione-torchiato').change(function() {
                 const container = $(this).parent();
                 const altroField = container.find('.altra-destinazione');
@@ -1494,8 +1508,6 @@
                 } else {
                     altroField.addClass('hidden-field').val('');
                 }
-                
-                updateSummaryTable();
             });
             
             // Calcoli automatici
@@ -1561,16 +1573,19 @@
                     return;
                 }
                 
+                // Crea data/ora di inizio
                 const [oraInizio, minutiInizio] = orarioInizio.split(':').map(n => parseInt(n));
                 const dataInizio = new Date(dataLavorazione);
                 dataInizio.setHours(oraInizio, minutiInizio, 0, 0);
                 
+                // Calcola data/ora di fine
                 const dataFine = new Date(dataInizio.getTime() + durataTotaleMinuti * 60 * 1000);
                 
                 const oreFine = dataFine.getHours().toString().padStart(2, '0');
                 const minutiFine = dataFine.getMinutes().toString().padStart(2, '0');
                 let orarioFineDisplay = `${oreFine}:${minutiFine}`;
                 
+                // Controlla se la data è cambiata
                 if (dataFine.getDate() !== dataInizio.getDate()) {
                     const giornoSuccessivo = dataFine.getDate();
                     orarioFineDisplay += ` <span class="next-day">(del giorno ${giornoSuccessivo})</span>`;
@@ -1584,7 +1599,7 @@
             }
         }
         
-        // Calcolo giacenza per fornitore
+        // Calcolo giacenza per fornitore (Entrata - Trasformata)
         function calculateGiacenza(supplierElement) {
             const quantitaEntrata = parseFloat(supplierElement.find('.quantita-fornitore').val()) || 0;
             const quantitaTrasformata = parseFloat(supplierElement.find('.quantita-trasformata').val()) || 0;
@@ -1599,17 +1614,21 @@
             const resaPrima = parseFloat(supplierElement.find('.resa-prima').val()) || 0;
             
             if (quantitaTrasformata > 0) {
+                // Calcola solo la quantità prima se non è un valore da combinazione
                 const quantitaPrimaField = supplierElement.find('.quantita-prima');
                 if (!quantitaPrimaField.hasClass('combination-result')) {
                     const quantitaPrima = (quantitaTrasformata * resaPrima / 100).toFixed(1);
                     quantitaPrimaField.val(quantitaPrima);
                 }
             } else {
+                // Reset solo se non è un valore da combinazione
                 const quantitaPrimaField = supplierElement.find('.quantita-prima');
                 if (!quantitaPrimaField.hasClass('combination-result')) {
                     quantitaPrimaField.val('');
                 }
             }
+            
+            // Le quantità di seconda e torchiato vengono gestite da updateAutoSums()
         }
         
         // Aggiornamento totali
@@ -1644,7 +1663,7 @@
             supplierCount = newCount;
         }
         
-        // Aggiornamento tabella riepilogo - MODIFICATA
+        // Aggiornamento tabella riepilogo
         function updateSummaryTable() {
             const tableBody = $('#riepilogo-table tbody');
             tableBody.empty();
@@ -1653,9 +1672,6 @@
                 const fornitore = $(this).find('.nome-fornitore').val() || '';
                 const altroFornitore = $(this).find('.altro-fornitore').val();
                 const nomeFornitore = fornitore === 'ALTRO' ? altroFornitore : fornitore;
-                
-                // Solo se c'è un nome fornitore valido
-                if (!nomeFornitore) return;
                 
                 const quantitaEntrata = $(this).find('.quantita-fornitore').val() || '0';
                 const quantitaTrasformata = $(this).find('.quantita-trasformata').val() || '0';
@@ -1668,67 +1684,44 @@
                 const orarioInizio = $(this).find('.orario-inizio').val() || '';
                 const orarioFineDisplay = $(this).find('.orario-fine-display').html() || '';
                 const durata = $(this).find('.durata-lavorazione').val() || '';
-                const quantitaPrima = $(this).find('.quantita-prima').val() || '0';
-                const pastorizzatoPrima = $(this).find('.pastorizzato-prima').val() || '';
-                const bioStatus = $(this).find('.bio-prima').val() || '';
                 const supplierIndex = $(this).data('supplier-index');
                 
-                // Gestione destinazioni con supporto per "ALTRO"
-                const destinazioniPrima = $(this).find('.destinazione-prima').val() || [];
-                let destPrimaText = '';
-                if (destinazioniPrima.length > 0) {
-                    destPrimaText = destinazioniPrima.map(dest => {
-                        if (dest === 'ALTRO') {
-                            const altraDestinazione = $(this).find('.altra-destinazione').val();
-                            return altraDestinazione || 'ALTRO';
-                        }
-                        return dest;
-                    }).join(', ');
+                if (nomeFornitore) {
+                    const isBio = certificazione.includes('BIO');
+                    const isBioSpecific = ['BIO EU', 'BIO DEM', 'BIO NTD'].includes(certificazione);
+                    
+                    const certificationBadge = isBio ? 
+                        `<span class="bio-indicator">${certificazione}</span>` : 
+                        certificazione;
+                    
+                    const certificationClass = isBioSpecific ? 'style="color: #dc3545; font-weight: bold;"' : '';
+                    const varietaClass = isBioSpecific ? 'style="color: #dc3545; font-weight: bold;"' : '';
+                    const lineaClass = isBioSpecific ? 'style="color: #dc3545; font-weight: bold;"' : '';
+                    
+                    const row = `
+                        <tr>
+                            <td><strong>${nomeFornitore}</strong></td>
+                            <td><span class="badge bg-primary">${quantitaEntrata} kg</span></td>
+                            <td><span class="badge bg-warning">${quantitaTrasformata} kg</span></td>
+                            <td><span class="badge bg-info">${giacenza} kg</span></td>
+                            <td ${certificationClass}>${certificationBadge}</td>
+                            <td ${varietaClass}>${nomeVarieta}</td>
+                            <td><code ${lineaClass}>${linea}</code></td>
+                            <td><span class="time-display">${orarioInizio}</span></td>
+                            <td><span class="time-display">${orarioFineDisplay}</span></td>
+                            <td>${durata}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary edit-supplier" data-index="${supplierIndex}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger delete-supplier" data-index="${supplierIndex}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.append(row);
                 }
-                
-                const isBio = certificazione.includes('BIO');
-                const isBioSpecific = ['BIO EU', 'BIO DEM', 'BIO NTD'].includes(certificazione);
-                
-                const certificationBadge = isBio ? 
-                    `<span class="bio-indicator">${certificazione}</span>` : 
-                    certificazione;
-                
-                const certificationClass = isBioSpecific ? 'style="color: #dc3545; font-weight: bold;"' : '';
-                const varietaClass = isBioSpecific ? 'style="color: #dc3545; font-weight: bold;"' : '';
-                const lineaClass = isBioSpecific ? 'style="color: #dc3545; font-weight: bold;"' : '';
-                
-                // Gestione colore bio - nero per DECLASSATO e NO
-                const bioClass = (bioStatus === 'DECLASSATO' || bioStatus === 'NO') ? 
-                    'style="color: #000000; font-weight: bold;"' : 
-                    (isBioSpecific ? 'style="color: #dc3545; font-weight: bold;"' : '');
-                
-                const row = `
-                    <tr>
-                        <td><strong>${nomeFornitore}</strong></td>
-                        <td><span class="badge bg-primary">${quantitaEntrata} kg</span></td>
-                        <td><span class="badge bg-warning">${quantitaTrasformata} kg</span></td>
-                        <td><span class="badge bg-info">${giacenza} kg</span></td>
-                        <td ${certificationClass}>${certificationBadge}</td>
-                        <td ${varietaClass}>${nomeVarieta}</td>
-                        <td><code ${lineaClass}>${linea}</code></td>
-                        <td><span class="time-display">${orarioInizio}</span></td>
-                        <td><span class="time-display">${orarioFineDisplay}</span></td>
-                        <td>${durata}</td>
-                        <td><strong>${quantitaPrima} kg</strong></td>
-                        <td>${pastorizzatoPrima}</td>
-                        <td style="font-size: 11px;">${destPrimaText || 'N/D'}</td>
-                        <td ${bioClass}>${bioStatus}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary edit-supplier" data-index="${supplierIndex}">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger delete-supplier" data-index="${supplierIndex}">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-                tableBody.append(row);
             });
             
             // Eventi per pulsanti nella tabella
@@ -1754,7 +1747,7 @@
             });
         }
         
-        // Gestione statistiche interattive
+        // Gestione statistiche interattive - RIPRISTINATA
         function openStatistics() {
             $('#stats-modal').fadeIn();
             if (!chartsInitialized) {
@@ -1769,6 +1762,7 @@
         }
         
         function initializeCharts() {
+            // Inizializza i grafici
             const ctxFornitori = document.getElementById('chartFornitori').getContext('2d');
             const ctxRese = document.getElementById('chartRese').getContext('2d');
             const ctxCertificazioni = document.getElementById('chartCertificazioni').getContext('2d');
@@ -1926,6 +1920,7 @@
         function updateStatistics() {
             const programData = collectProgramData();
             
+            // Aggiorna sommario
             const summaryHtml = `
                 <div class="summary-item">
                     <div class="summary-value">${programData.fornitori.length}</div>
@@ -1946,6 +1941,7 @@
             `;
             $('#stats-summary').html(summaryHtml);
             
+            // Aggiorna grafici
             updateChartsData(programData);
         }
         
@@ -2158,7 +2154,7 @@
             return { labels, datasets };
         }
         
-        // Raccolta dati programma - AGGIORNATA
+        // Raccolta dati programma - AGGIORNATA per includere caratteristiche complete
         function collectProgramData() {
             const data = {
                 tipoAgrume: $('#tipo-agrume-giornaliero').val(),
@@ -2168,7 +2164,7 @@
                 giacenzaTotale: parseFloat($('#giacenza-totale').val()) || 0,
                 ultimaRevisione: $('#last-revision').text(),
                 lastCombinationSuppliers: lastCombinationSuppliers,
-                combinationDetails: combinationDetails,
+                combinationDetails: combinationDetails, // Aggiunto per i dettagli completi
                 sumDetailsSeconda: sumDetailsSeconda,
                 sumDetailsTorchiato: sumDetailsTorchiato,
                 fornitori: []
@@ -2176,34 +2172,6 @@
             
             $('.supplier-row').each(function() {
                 const destinazioniPrima = $(this).find('.destinazione-prima').val() || [];
-                
-                // Gestione destinazioni con supporto per "ALTRO"
-                let destinazioniPrimaText = '';
-                if (destinazioniPrima.length > 0) {
-                    destinazioniPrimaText = destinazioniPrima.map(dest => {
-                        if (dest === 'ALTRO') {
-                            const altraDestinazione = $(this).find('.altra-destinazione').val();
-                            return altraDestinazione || 'ALTRO';
-                        }
-                        return dest;
-                    }).join(', ');
-                }
-                
-                // Gestione destinations seconda e torchiato con supporto per "ALTRO"
-                const destinazioneSeconda = $(this).find('.destinazione-seconda').val();
-                let destinazioneSecondaText = destinazioneSeconda;
-                if (destinazioneSeconda === 'ALTRO') {
-                    const altraDestinazione = $(this).find('.destinazione-seconda').closest('.col-md-4').find('.altra-destinazione').val();
-                    destinazioneSecondaText = altraDestinazione || 'ALTRO';
-                }
-                
-                const destinazioneTorchiato = $(this).find('.destinazione-torchiato').val();
-                let destinazioneTorchiatoText = destinazioneTorchiato;
-                if (destinazioneTorchiato === 'ALTRO') {
-                    const altraDestinazione = $(this).find('.destinazione-torchiato').closest('.col-md-4').find('.altra-destinazione').val();
-                    destinazioneTorchiatoText = altraDestinazione || 'ALTRO';
-                }
-                
                 const fornitore = {
                     nome: $(this).find('.nome-fornitore').val(),
                     altroNome: $(this).find('.altro-fornitore').val(),
@@ -2265,9 +2233,12 @@
                         }
                     },
                     destinazioni: {
-                        prima: destinazioniPrimaText,
-                        seconda: destinazioneSecondaText,
-                        torchiato: destinazioneTorchiatoText
+                        prima: destinazioniPrima.join(', '),
+                        primaAltro: $(this).find('.destinazione-prima').parent().find('.altra-destinazione').val() || '',
+                        seconda: $(this).find('.destinazione-seconda').val(),
+                        secondaAltro: $(this).find('.destinazione-seconda').parent().find('.altra-destinazione').val() || '',
+                        torchiato: $(this).find('.destinazione-torchiato').val(),
+                        torchiatoAltro: $(this).find('.destinazione-torchiato').parent().find('.altra-destinazione').val() || ''
                     }
                 };
                 
@@ -2277,13 +2248,13 @@
             return data;
         }
         
-        // Anteprima stampa COMPATTA
+        // Anteprima stampa COMPATTA - AGGIORNATA con tutte le correzioni richieste
         $('#anteprima-stampa').click(function() {
             const programData = collectProgramData();
             generateCompactPrintPreview(programData);
         });
         
-        // Generazione anteprima stampa COMPATTA - AGGIORNATA
+        // Generazione anteprima stampa COMPATTA - VERSIONE CORRETTA
         function generateCompactPrintPreview(data) {
             const printWindow = window.open('', '_blank');
             
@@ -2363,6 +2334,11 @@
                         .bio-cell {
                             background-color: #ffebee;
                             color: #dc3545;
+                            font-weight: bold;
+                        }
+                        
+                        .bio-black-cell {
+                            color: #000000;
                             font-weight: bold;
                         }
                         
@@ -2492,7 +2468,7 @@
                                 <th>Inizio</th>
                                 <th>Fine</th>
                                 <th>Succo 1ª<br/>(kg)</th>
-                                <th>Past.</th>
+                                <th>Pastorizzato</th>
                                 <th>Dest.</th>
                                 <th>Polpa</th>
                                 <th>°BX</th>
@@ -2511,6 +2487,7 @@
                     </tr>
                 `;
                 
+                // Genera righe per ogni fornitore nella combinazione
                 data.combinationDetails.forEach((detail, index) => {
                     printContent += `
                         <tr class="combination-group">
@@ -2528,40 +2505,57 @@
                     `;
                 });
                 
+                // Riga totale combinazione
                 const totaleCombinazione = data.combinationDetails.reduce((sum, detail) => sum + parseFloat(detail.risultato), 0);
                 printContent += `
                     <tr class="combination-group">
-                        <td colspan="7"><strong>TOTALE COMBINAZIONE</strong></td>
+                        <td colspan="8"><strong>TOTALE COMBINAZIONE</strong></td>
                         <td><strong>${totaleCombinazione.toFixed(1)}</strong></td>
-                        <td>-</td>
                         <td colspan="5">Somma delle contribuzioni individuali</td>
                     </tr>
                 `;
             }
             
-            // Genera righe fornitori normali
+            // Genera righe fornitori normali (non combinati) - CORRETTA
             data.fornitori.forEach((fornitore, index) => {
+                // Salta i fornitori che fanno parte della combinazione (tranne l'ultimo che mostra il totale)
                 const isInCombination = data.combinationDetails && data.combinationDetails.some(detail => 
                     detail.nome === (fornitore.nome === 'ALTRO' ? fornitore.altroNome : fornitore.nome)
                 );
+                
+                if (!fornitore.nome) return; // Salta fornitori senza nome (rimuove ultima riga vuota)
                 
                 if (!isInCombination || fornitore.hasCombination) {
                     const nomeFornitore = fornitore.nome === 'ALTRO' ? fornitore.altroNome : fornitore.nome;
                     const nomeVarieta = fornitore.varieta === 'ALTRO' ? fornitore.altraVarieta : fornitore.varieta;
                     const isBioSpecific = ['BIO EU', 'BIO DEM', 'BIO NTD'].includes(fornitore.certificazione);
-                    const bioClass = isBioSpecific ? 'bio-cell' : '';
+                    const bioStatus = fornitore.caratteristicheProdotti?.prima?.bio || 'N/D';
+                    const isDeclassatoOrNo = bioStatus === 'DECLASSATO' || bioStatus === 'NO';
+                    
+                    // Determina le classi CSS in base allo status BIO
+                    const bioClass = isBioSpecific && !isDeclassatoOrNo ? 'bio-cell' : (isDeclassatoOrNo ? 'bio-black-cell' : '');
                     
                     const orarioFineClean = fornitore.orarioFineDisplay ? 
                         fornitore.orarioFineDisplay.replace(/<[^>]*>/g, '').replace('del giorno', 'g.') : '';
                     
-                    const destPrima = fornitore.destinazioni.prima ? 
-                        fornitore.destinazioni.prima.split(', ').map(d => d.replace('CONCENTRATO', 'CONC').replace('NAT IN TINI', 'TINI')).join(',') : 'N/D';
+                    // Gestione destinazioni CORRETTA con "ALTRO"
+                    let destPrima = fornitore.destinazioni.prima ? fornitore.destinazioni.prima : 'N/D';
                     
-                    const polpa = fornitore.caratteristicheProdotti.prima.tenorePolpa || 'N/D';
-                    const brix = fornitore.caratteristicheProdotti.prima.brix || 'N/D';
-                    const conservato = fornitore.caratteristicheProdotti.prima.conservato || 'N/D';
-                    const bio = fornitore.caratteristicheProdotti.prima.bio || 'N/D';
-                    const pastorizzato = fornitore.caratteristicheProdotti.prima.pastorizzato || 'N/D';
+                    // Se contiene "ALTRO", sostituisci con il testo del campo "altro"
+                    if (destPrima.includes('ALTRO') && fornitore.destinazioni.primaAltro) {
+                        destPrima = destPrima.replace('ALTRO', fornitore.destinazioni.primaAltro);
+                    }
+                    
+                    // Abbrevia le destinazioni
+                    destPrima = destPrima.split(', ').map(d => 
+                        d.replace('CONCENTRATO', 'CONC').replace('NAT IN TINI', 'TINI')
+                    ).join(',');
+                    
+                    // Caratteristiche prodotto
+                    const polpa = fornitore.caratteristicheProdotti?.prima?.tenorePolpa || 'N/D';
+                    const brix = fornitore.caratteristicheProdotti?.prima?.brix || 'N/D';
+                    const conservato = fornitore.caratteristicheProdotti?.prima?.conservato || 'N/D';
+                    const pastorizzato = fornitore.caratteristicheProdotti?.prima?.pastorizzato || 'N/D';
                     
                     printContent += `
                         <tr>
@@ -2574,11 +2568,11 @@
                             <td style="font-size: 7px;">${orarioFineClean || '-'}</td>
                             <td><strong>${fornitore.quantitaProdotti.prima}${fornitore.hasCombination ? ' (C)' : ''}</strong></td>
                             <td>${pastorizzato}</td>
-                            <td style="font-size: 7px;">${destPrima}</td>
+                            <td class="${bioClass}" style="font-size: 7px;">${destPrima}</td>
                             <td>${polpa}</td>
                             <td>${brix}</td>
                             <td>${conservato}</td>
-                            <td class="${bioClass}">${bio}</td>
+                            <td class="${bioClass}">${bioStatus}</td>
                         </tr>
                     `;
                 }
@@ -2589,12 +2583,31 @@
                     </table>
             `;
             
-            // Legenda aggiornata
+            // Legenda
             printContent += `
                 <div style="font-size: 7px; margin-bottom: 10px;">
-                    <strong>Legenda:</strong> (C) = Valore da Combinazione | Cert. = Certificazione | Past. = Pastorizzato | Dest. = Destinazione | Cons. = Conservato | Bio = Biologico
+                    <strong>Legenda:</strong> (C) = Valore da Combinazione | Cert. = Certificazione | Dest. = Destinazione | Cons. = Conservato | Bio = Biologico
                 </div>
             `;
+            
+            // Trova ultimo fornitore valido per sezioni riepilogo
+            const lastValidSupplier = data.fornitori.filter(f => f.nome).slice(-1)[0];
+            
+            // Gestione destinazioni per sezioni riepilogo CORRETTA
+            let destSeconda = 'N/D';
+            let destTorchiato = 'N/D';
+            
+            if (lastValidSupplier) {
+                destSeconda = lastValidSupplier.destinazioni.seconda || 'N/D';
+                if (destSeconda === 'ALTRO' && lastValidSupplier.destinazioni.secondaAltro) {
+                    destSeconda = lastValidSupplier.destinazioni.secondaAltro;
+                }
+                
+                destTorchiato = lastValidSupplier.destinazioni.torchiato || 'N/D';
+                if (destTorchiato === 'ALTRO' && lastValidSupplier.destinazioni.torchiatoAltro) {
+                    destTorchiato = lastValidSupplier.destinazioni.torchiatoAltro;
+                }
+            }
             
             printContent += `
                     <div class="summary-section">
@@ -2604,22 +2617,22 @@
                                 <span>Quantità Totale:</span>
                                 <span><strong>${totalSeconda.toFixed(1)} kg</strong></span>
                             </div>
-                            ${data.fornitori.length > 0 ? `
-                                <div class="summary-item">
-                                    <span>Destinazione:</span>
-                                    <span>${data.fornitori[data.fornitori.length-1].destinazioni.seconda || 'N/D'}</span>
-                                </div>
+                            <div class="summary-item">
+                                <span>Destinazione:</span>
+                                <span>${destSeconda}</span>
+                            </div>
+                            ${lastValidSupplier ? `
                                 <div class="summary-item">
                                     <span>Polpa:</span>
-                                    <span>${data.fornitori[data.fornitori.length-1].caratteristicheProdotti?.seconda?.tenorePolpa || 'N/D'}</span>
+                                    <span>${lastValidSupplier.caratteristicheProdotti?.seconda?.tenorePolpa || 'N/D'}</span>
                                 </div>
                                 <div class="summary-item">
                                     <span>°BX:</span>
-                                    <span>${data.fornitori[data.fornitori.length-1].caratteristicheProdotti?.seconda?.brix || 'N/D'}</span>
+                                    <span>${lastValidSupplier.caratteristicheProdotti?.seconda?.brix || 'N/D'}</span>
                                 </div>
                                 <div class="summary-item">
                                     <span>Conservato:</span>
-                                    <span>${data.fornitori[data.fornitori.length-1].caratteristicheProdotti?.seconda?.conservato || 'N/D'}</span>
+                                    <span>${lastValidSupplier.caratteristicheProdotti?.seconda?.conservato || 'N/D'}</span>
                                 </div>
                             ` : ''}
                             ${data.sumDetailsSeconda && data.sumDetailsSeconda.length > 1 ? `
@@ -2635,22 +2648,22 @@
                                 <span>Quantità Totale:</span>
                                 <span><strong>${totalTorchiato.toFixed(1)} kg</strong></span>
                             </div>
-                            ${data.fornitori.length > 0 ? `
-                                <div class="summary-item">
-                                    <span>Destinazione:</span>
-                                    <span>${data.fornitori[data.fornitori.length-1].destinazioni.torchiato || 'N/D'}</span>
-                                </div>
+                            <div class="summary-item">
+                                <span>Destinazione:</span>
+                                <span>${destTorchiato}</span>
+                            </div>
+                            ${lastValidSupplier ? `
                                 <div class="summary-item">
                                     <span>Polpa:</span>
-                                    <span>${data.fornitori[data.fornitori.length-1].caratteristicheProdotti?.torchiato?.tenorePolpa || 'N/D'}</span>
+                                    <span>${lastValidSupplier.caratteristicheProdotti?.torchiato?.tenorePolpa || 'N/D'}</span>
                                 </div>
                                 <div class="summary-item">
                                     <span>°BX:</span>
-                                    <span>${data.fornitori[data.fornitori.length-1].caratteristicheProdotti?.torchiato?.brix || 'N/D'}</span>
+                                    <span>${lastValidSupplier.caratteristicheProdotti?.torchiato?.brix || 'N/D'}</span>
                                 </div>
                                 <div class="summary-item">
                                     <span>Conservato:</span>
-                                    <span>${data.fornitori[data.fornitori.length-1].caratteristicheProdotti?.torchiato?.conservato || 'N/D'}</span>
+                                    <span>${lastValidSupplier.caratteristicheProdotti?.torchiato?.conservato || 'N/D'}</span>
                                 </div>
                             ` : ''}
                             ${data.sumDetailsTorchiato && data.sumDetailsTorchiato.length > 1 ? `
