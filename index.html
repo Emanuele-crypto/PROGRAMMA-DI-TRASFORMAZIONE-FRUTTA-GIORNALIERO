@@ -2248,13 +2248,13 @@
             return data;
         }
         
-        // Anteprima stampa COMPATTA - AGGIORNATA con tutte le correzioni richieste
+        // Anteprima stampa COMPATTA - AGGIORNATA con tutte le correzioni richieste e layout orizzontale
         $('#anteprima-stampa').click(function() {
             const programData = collectProgramData();
             generateCompactPrintPreview(programData);
         });
         
-        // Generazione anteprima stampa COMPATTA - VERSIONE FINALE CORRETTA
+        // Generazione anteprima stampa COMPATTA - VERSIONE CORRETTA CON LAYOUT ORIZZONTALE
         function generateCompactPrintPreview(data) {
             const printWindow = window.open('', '_blank');
             
@@ -2635,7 +2635,8 @@
                                 <div class="summary-item">
                                     <span>°BX:</span>
                                     <span>${lastValidSupplier.caratteristicheProdotti?.seconda?.brix || 'N/D'}</span>
-                                    <div class="summary-item">
+                                </div>
+                                <div class="summary-item">
                                     <span>Conservato:</span>
                                     <span>${lastValidSupplier.caratteristicheProdotti?.seconda?.conservato || 'N/D'}</span>
                                 </div>
