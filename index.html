@@ -579,6 +579,7 @@
                      <option value="ARCO">ARCO</option>
                      <option value="GIOVINAZZO">GIOVINAZZO</option>
                      <option value="AZ.T.C.">AZ.T.C.</option>
+                     <option value="M.B.T.F">AZ.T.C.</option>
                      <option value="VASTA">VASTA</option>
                      <option value="ALTRO">ALTRO</option>
                  </select>
@@ -607,6 +608,7 @@
                      <option value="BIO EU">BIO EU</option>
                      <option value="BIO DEM">BIO DEM</option>
                      <option value="BIO NTD">BIO NTD</option>
+                     <option value="BIO DEM/NTD">BIO DEM/NTD</option>
                      <option value="TRACCIATO">TRACCIATO</option>
                      <option value="IGP">IGP</option>
                      <option value="CONVENZIONALE">CONVENZIONALE</option>
@@ -625,6 +627,8 @@
                      <option value="INTERDONATO">Interdonato</option>
                      <option value="MONACHELLO">Monachello</option>
                      <option value="DI SIRACUSA">Di Siracusa</option>
+                     <option value="TARD. DI CIACULLI">TARD. DI CIACULLI</option>
+                     <option value="MARZOLO">MARZOLO</option>
                      <option value="ALTRO">Altro</option>
                  </select>
                  <input type="text" class="form-control mt-2 altra-varieta hidden-field" placeholder="Specifica altra varietà">
@@ -824,6 +828,7 @@
                         <option value="STANDARD">STANDARD</option>
                         <option value="LIMPIDO">LIMPIDO</option>
                         <option value="SEMICLEAR">SEMICLEAR</option>
+                        <option value="<1%"><1%</option>
                         <option value="1%">1%</option>
                         <option value="2%">2%</option>
                         <option value="3%">3%</option>
@@ -872,6 +877,7 @@
                         <option value="STANDARD">STANDARD</option>
                         <option value="LIMPIDO">LIMPIDO</option>
                         <option value="SEMICLEAR">SEMICLEAR</option>
+                        <option value="<1%"><1%</option>
                         <option value="1%">1%</option>
                         <option value="2%">2%</option>
                         <option value="3%">3%</option>
@@ -913,6 +919,7 @@
                         <option value="STANDARD">STANDARD</option>
                         <option value="LIMPIDO">LIMPIDO</option>
                         <option value="SEMICLEAR">SEMICLEAR</option>
+                        <option value="<1%"><1%</option>
                         <option value="1%">1%</option>
                         <option value="2%">2%</option>
                         <option value="3%">3%</option>
@@ -988,7 +995,7 @@
         // Calcolo automatico rese in base al tipo di agrume
         function calculateAutoYields(agrume) {
             const yields = {
-                'LIMONE': { prima: 30, seconda: 10, torchiato: 5 },
+                'LIMONE': { prima: 32, seconda: 10, torchiato: 5 },
                 'ARANCIA': { prima: 35, seconda: 12, torchiato: 6 },
                 'MANDARINO': { prima: 42, seconda: 10, torchiato: 4 },
                 'POMPELMO': { prima: 30, seconda: 15, torchiato: 6 },
