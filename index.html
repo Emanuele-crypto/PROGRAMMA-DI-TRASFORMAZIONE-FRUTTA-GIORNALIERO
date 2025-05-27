@@ -717,7 +717,7 @@
                          <option value="PET 200">PET 200</option>
                          <option value="PET 480">PET 480</option>
                          <option value="ACMA">ACMA</option
-<option value="REX">REX</option>
+                                                   <option value="REX">REX</option>
                          <option value="GOGLIO">GOGLIO</option>
                          <option value="VASCHETTE">VASCHETTE</option>
                          <option value="VASCHETTE ZUCCHERATE">VASCHETTE ZUCCHERATE</option>
@@ -1299,7 +1299,7 @@
              alert('Combinazione rimossa. I valori del succo 1ª sono stati ricalcolati in base alle rese.');
          }
          
-        // Aggiorna stili BIO per certificazione, varietà e linea
+         // Aggiorna stili BIO per certificazione, varietà e linea
          function updateBioStyles(supplierElement) {
              const certificazione = supplierElement.find('.certificazione-prodotto').val();
              const certificazioneField = supplierElement.find('.certificazione-prodotto');
@@ -1746,7 +1746,7 @@
              });
          }
          
-         // Gestione statistiche interattive
+         // Gestione statistiche interattive - RIPRISTINATA
          function openStatistics() {
              $('#stats-modal').fadeIn();
              if (!chartsInitialized) {
@@ -1798,10 +1798,362 @@
                  }
              });
              
-             // Altri grafici omessi per brevità (rimangono invariati)
+             // Grafico Rese
+             charts.rese = new Chart(ctxRese, {
+                 type: 'bar',
+                 data: {
+                     labels: ['Succo 1ª', 'Succo 2ª', 'Torchiato'],
+                     datasets: [{
+                         label: 'Resa Media %',
+                         data: [],
+                         backgroundColor: ['#28a745', '#ffc107', '#17a2b8']
+                     }]
+                 },
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     scales: {
+                         y: {
+                             beginAtZero: true,
+                             max: 50
+                         }
+                     }
+                 }
+             });
+             
+             // Grafico Certificazioni
+             charts.certificazioni = new Chart(ctxCertificazioni, {
+                 type: 'doughnut',
+                 data: {
+                     labels: [],
+                     datasets: [{
+                         data: [],
+                         backgroundColor: [
+                             '#dc3545',
+                             '#28a745',
+                             '#ffc107',
+                             '#17a2b8',
+                             '#6c757d'
+                         ]
+                     }]
+                 },
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false
+                 }
+             });
+             
+             // Grafico Timeline
+             charts.timeline = new Chart(ctxTimeline, {
+                 type: 'line',
+                 data: {
+                     labels: [],
+                     datasets: [{
+                         label: 'Produzione oraria (kg)',
+                         data: [],
+                         borderColor: '#2a5298',
+                         backgroundColor: 'rgba(42, 82, 152, 0.1)',
+                         fill: true,
+                         tension: 0.1
+                     }]
+                 },
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     scales: {
+                         y: {
+                             beginAtZero: true
+                         }
+                     }
+                 }
+             });
+             
+             // Grafico Efficienza Linee
+             charts.efficienza = new Chart(ctxEfficienza, {
+                 type: 'radar',
+                 data: {
+                     labels: [],
+                     datasets: [{
+                         label: 'Efficienza %',
+                         data: [],
+                         backgroundColor: 'rgba(42, 82, 152, 0.2)',
+                         borderColor: '#2a5298',
+                         pointBackgroundColor: '#2a5298'
+                     }]
+                 },
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     scales: {
+                         r: {
+                             beginAtZero: true,
+                             max: 100
+                         }
+                     }
+                 }
+             });
+             
+             // Grafico Destinazioni
+             charts.destinazioni = new Chart(ctxDestinazioni, {
+                 type: 'bar',
+                 data: {
+                     labels: [],
+                     datasets: []
+                 },
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     scales: {
+                         x: {
+                             stacked: true
+                         },
+                         y: {
+                             stacked: true,
+                             beginAtZero: true
+                         }
+                     }
+                 }
+             });
          }
          
-         // Raccolta dati programma - AGGIORNATA per includere combinationDetails
+         function updateStatistics() {
+             const programData = collectProgramData();
+             
+             // Aggiorna sommario
+             const summaryHtml = `
+                 <div class="summary-item">
+                     <div class="summary-value">${programData.fornitori.length}</div>
+                     <div class="summary-label">Fornitori Totali</div>
+                 </div>
+                 <div class="summary-item">
+                     <div class="summary-value">${programData.trasformataTotale.toLocaleString()}</div>
+                     <div class="summary-label">Kg Trasformati</div>
+                 </div>
+                 <div class="summary-item">
+                     <div class="summary-value">${programData.giacenzaTotale.toLocaleString()}</div>
+                     <div class="summary-label">Kg Giacenza</div>
+                 </div>
+                 <div class="summary-item">
+                     <div class="summary-value">${calculateTotalYield(programData).toFixed(1)}%</div>
+                     <div class="summary-label">Resa Media Totale</div>
+                 </div>
+             `;
+             $('#stats-summary').html(summaryHtml);
+             
+             // Aggiorna grafici
+             updateChartsData(programData);
+         }
+         
+         function calculateTotalYield(data) {
+             let totalYield = 0;
+             let count = 0;
+             
+             data.fornitori.forEach(f => {
+                 if (f.quantitaTrasformata > 0) {
+                     totalYield += f.rese.prima + f.rese.seconda + f.rese.torchiato;
+                     count++;
+                 }
+             });
+             
+             return count > 0 ? totalYield / count : 0;
+         }
+         
+         function updateChartsData(data) {
+             // Aggiorna grafico fornitori
+             const fornitoriLabels = [];
+             const fornitoriData = [];
+             
+             data.fornitori.forEach(f => {
+                 const nome = f.nome === 'ALTRO' ? f.altroNome : f.nome;
+                 if (nome && f.quantitaTrasformata > 0) {
+                     fornitoriLabels.push(nome);
+                     fornitoriData.push(f.quantitaTrasformata);
+                 }
+             });
+             
+             charts.fornitori.data.labels = fornitoriLabels;
+             charts.fornitori.data.datasets[0].data = fornitoriData;
+             charts.fornitori.update();
+             
+             // Aggiorna grafico rese medie
+             let resePrima = 0, reseSeconda = 0, reseTorchiato = 0;
+             let countRese = 0;
+             
+             data.fornitori.forEach(f => {
+                 if (f.quantitaTrasformata > 0) {
+                     resePrima += f.rese.prima;
+                     reseSeconda += f.rese.seconda;
+                     reseTorchiato += f.rese.torchiato;
+                     countRese++;
+                 }
+             });
+             
+             if (countRese > 0) {
+                 charts.rese.data.datasets[0].data = [
+                     (resePrima / countRese).toFixed(1),
+                     (reseSeconda / countRese).toFixed(1),
+                     (reseTorchiato / countRese).toFixed(1)
+                 ];
+             }
+             charts.rese.update();
+             
+             // Aggiorna grafico certificazioni
+             const certMap = {};
+             data.fornitori.forEach(f => {
+                 if (f.certificazione) {
+                     certMap[f.certificazione] = (certMap[f.certificazione] || 0) + 1;
+                 }
+             });
+             
+             charts.certificazioni.data.labels = Object.keys(certMap);
+             charts.certificazioni.data.datasets[0].data = Object.values(certMap);
+             charts.certificazioni.update();
+             
+             // Aggiorna grafico timeline
+             const timelineData = generateTimelineData(data);
+             charts.timeline.data.labels = timelineData.labels;
+             charts.timeline.data.datasets[0].data = timelineData.data;
+             charts.timeline.update();
+             
+             // Aggiorna grafico efficienza linee
+             const efficienzaData = generateEfficienzaData(data);
+             charts.efficienza.data.labels = efficienzaData.labels;
+             charts.efficienza.data.datasets[0].data = efficienzaData.data;
+             charts.efficienza.update();
+             
+             // Aggiorna grafico destinazioni
+             const destinazioniData = generateDestinazioniData(data);
+             charts.destinazioni.data.labels = destinazioniData.labels;
+             charts.destinazioni.data.datasets = destinazioniData.datasets;
+             charts.destinazioni.update();
+         }
+         
+         function generateTimelineData(data) {
+             const labels = [];
+             const productionData = [];
+             
+             // Genera timeline oraria dalle 6:00 alle 22:00
+             for (let hour = 6; hour <= 22; hour++) {
+                 labels.push(`${hour}:00`);
+                 productionData.push(0);
+             }
+             
+             // Calcola produzione per ogni ora
+             data.fornitori.forEach(f => {
+                 if (f.orarioInizio && f.portataImpianto > 0) {
+                     const [startHour, startMin] = f.orarioInizio.split(':').map(Number);
+                     const durata = f.quantitaTrasformata / f.portataImpianto; // ore
+                     
+                     for (let i = 0; i < durata; i++) {
+                         const hourIndex = startHour + i - 6; // Adjust for array starting at 6:00
+                         if (hourIndex >= 0 && hourIndex < productionData.length) {
+                             productionData[hourIndex] += f.portataImpianto;
+                         }
+                     }
+                 }
+             });
+             
+             return { labels, data: productionData };
+         }
+         
+         function generateEfficienzaData(data) {
+             const lineaMap = {};
+             const lineaPortata = {};
+             
+             data.fornitori.forEach(f => {
+                 if (f.lineaTrasformazione) {
+                     if (!lineaMap[f.lineaTrasformazione]) {
+                         lineaMap[f.lineaTrasformazione] = 0;
+                         lineaPortata[f.lineaTrasformazione] = [];
+                     }
+                     lineaMap[f.lineaTrasformazione] += f.quantitaTrasformata;
+                     if (f.portataImpianto > 0) {
+                         lineaPortata[f.lineaTrasformazione].push(f.portataImpianto);
+                     }
+                 }
+             });
+             
+             const labels = Object.keys(lineaMap);
+             const efficienzaValues = labels.map(linea => {
+                 const portate = lineaPortata[linea];
+               if (portate.length > 0) {
+                     const avgPortata = portate.reduce((a, b) => a + b, 0) / portate.length;
+                     const teoricaMax = avgPortata * 16; // 16 ore di lavoro teoriche
+                     const effettiva = lineaMap[linea];
+                     return Math.min((effettiva / teoricaMax) * 100, 100);
+                 }
+                 return 0;
+             });
+             
+             return { labels, data: efficienzaValues };
+         }
+         
+         function generateDestinazioniData(data) {
+             const destinazioniMap = {
+                 prima: {},
+                 seconda: {},
+                 torchiato: {}
+             };
+             
+             // Raccogli dati destinazioni
+             data.fornitori.forEach(f => {
+                 // Prima
+                 if (f.destinazioni.prima) {
+                     const dests = f.destinazioni.prima.split(', ');
+                     dests.forEach(dest => {
+                         if (!destinazioniMap.prima[dest]) destinazioniMap.prima[dest] = 0;
+                         destinazioniMap.prima[dest] += f.quantitaProdotti.prima / dests.length;
+                     });
+                 }
+                 
+                 // Seconda
+                 if (f.destinazioni.seconda) {
+                     if (!destinazioniMap.seconda[f.destinazioni.seconda]) {
+                         destinazioniMap.seconda[f.destinazioni.seconda] = 0;
+                     }
+                     destinazioniMap.seconda[f.destinazioni.seconda] += f.quantitaProdotti.seconda;
+                 }
+                 
+                 // Torchiato
+                 if (f.destinazioni.torchiato) {
+                     if (!destinazioniMap.torchiato[f.destinazioni.torchiato]) {
+                         destinazioniMap.torchiato[f.destinazioni.torchiato] = 0;
+                     }
+                     destinazioniMap.torchiato[f.destinazioni.torchiato] += f.quantitaProdotti.torchiato;
+                 }
+             });
+             
+             // Crea dataset per grafico stacked
+             const allDestinations = new Set([
+                 ...Object.keys(destinazioniMap.prima),
+                 ...Object.keys(destinazioniMap.seconda),
+                 ...Object.keys(destinazioniMap.torchiato)
+             ]);
+             
+             const labels = Array.from(allDestinations);
+             
+             const datasets = [
+                 {
+                     label: 'Succo 1ª',
+                     data: labels.map(dest => destinazioniMap.prima[dest] || 0),
+                     backgroundColor: '#28a745'
+                 },
+                 {
+                     label: 'Succo 2ª',
+                     data: labels.map(dest => destinazioniMap.seconda[dest] || 0),
+                     backgroundColor: '#ffc107'
+                 },
+                 {
+                     label: 'Torchiato',
+                     data: labels.map(dest => destinazioniMap.torchiato[dest] || 0),
+                     backgroundColor: '#17a2b8'
+                 }
+             ];
+             
+             return { labels, datasets };
+         }
+         
+         // Raccolta dati programma - AGGIORNATA per includere caratteristiche complete
          function collectProgramData() {
              const data = {
                  tipoAgrume: $('#tipo-agrume-giornaliero').val(),
@@ -1845,6 +2197,40 @@
                          torchiato: parseFloat($(this).find('.quantita-torchiato').val()) || 0
                      },
                      hasCombination: $(this).find('.quantita-prima').hasClass('combination-result'),
+                     isAutoSum: {
+                         seconda: $(this).find('.quantita-seconda').hasClass('auto-sum-field'),
+                         torchiato: $(this).find('.quantita-torchiato').hasClass('auto-sum-field')
+                     },
+                     caratteristicheProdotti: {
+                         prima: {
+                             tenorePolpa: $(this).find('.tenore-polpa-prima').val(),
+                             altroTenore: $(this).find('.altro-tenore-prima').val(),
+                             brix: $(this).find('.brix-prima').val(),
+                             altroBrix: $(this).find('.altro-brix-prima').val(),
+                             bio: $(this).find('.bio-prima').val(),
+                             pastorizzato: $(this).find('.pastorizzato-prima').val(),
+                             conservato: $(this).find('.conservato-prima').val(),
+                             note: $(this).find('.note-prima').val()
+                         },
+                         seconda: {
+                             tenorePolpa: $(this).find('.tenore-polpa-seconda').val(),
+                             altroTenore: $(this).find('.altro-tenore-seconda').val(),
+                             brix: $(this).find('.brix-seconda').val(),
+                             altroBrix: $(this).find('.altro-brix-seconda').val(),
+                             pastorizzato: $(this).find('.pastorizzato-seconda').val(),
+                             conservato: $(this).find('.conservato-seconda').val(),
+                             note: $(this).find('.note-seconda').val()
+                         },
+                         torchiato: {
+                             tenorePolpa: $(this).find('.tenore-polpa-torchiato').val(),
+                             altroTenore: $(this).find('.altro-tenore-torchiato').val(),
+                             brix: $(this).find('.brix-torchiato').val(),
+                             altroBrix: $(this).find('.altro-brix-torchiato').val(),
+                             pastorizzato: $(this).find('.pastorizzato-torchiato').val(),
+                             conservato: $(this).find('.conservato-torchiato').val(),
+                             note: $(this).find('.note-torchiato').val()
+                         }
+                     },
                      destinazioni: {
                          prima: destinazioniPrima.join(', '),
                          seconda: $(this).find('.destinazione-seconda').val(),
@@ -1858,13 +2244,13 @@
              return data;
          }
          
-         // Anteprima stampa COMPATTA
+         // Anteprima stampa COMPATTA - AGGIORNATA
          $('#anteprima-stampa').click(function() {
              const programData = collectProgramData();
              generateCompactPrintPreview(programData);
          });
          
-         // Generazione anteprima stampa COMPATTA - NUOVA VERSIONE
+         // Generazione anteprima stampa COMPATTA - NUOVA VERSIONE AGGIORNATA
          function generateCompactPrintPreview(data) {
              const printWindow = window.open('', '_blank');
              
@@ -1922,21 +2308,21 @@
                          .suppliers-table {
                              width: 100%;
                              border-collapse: collapse;
-                             margin-bottom: 15px;
-                             font-size: 9px;
+                             margin-bottom: 10px;
+                             font-size: 8px;
                          }
                          
                          .suppliers-table th {
                              background-color: #1e3c72;
                              color: white;
-                             padding: 4px;
+                             padding: 3px;
                              text-align: center;
-                             font-size: 8px;
+                             font-size: 7px;
                          }
                          
                          .suppliers-table td {
                              border: 1px solid #ddd;
-                             padding: 3px;
+                             padding: 2px;
                              text-align: center;
                              vertical-align: middle;
                          }
@@ -1947,77 +2333,90 @@
                              font-weight: bold;
                          }
                          
+                         .combination-group {
+                             background-color: #fff3cd;
+                             border: 2px solid #ffc107;
+                         }
+                         
+                         .combination-header {
+                             background-color: #ffc107;
+                             color: #856404;
+                             font-weight: bold;
+                             text-align: center;
+                             padding: 3px;
+                         }
+                         
                          .summary-section {
                              display: grid;
                              grid-template-columns: 1fr 1fr;
                              gap: 15px;
-                             margin-bottom: 20px;
+                             margin-bottom: 15px;
                          }
                          
                          .summary-box {
                              border: 1px solid #ddd;
-                             padding: 10px;
+                             padding: 8px;
                              background-color: #f8f9fa;
                          }
                          
                          .summary-title {
                              font-weight: bold;
                              color: #1e3c72;
-                             margin-bottom: 8px;
-                             font-size: 12px;
+                             margin-bottom: 6px;
+                             font-size: 11px;
                          }
                          
                          .summary-item {
                              display: flex;
                              justify-content: space-between;
-                             margin-bottom: 3px;
-                             font-size: 10px;
+                             margin-bottom: 2px;
+                             font-size: 9px;
                          }
                          
                          .totals-grid {
                              display: grid;
                              grid-template-columns: repeat(3, 1fr);
-                             gap: 10px;
-                             margin-bottom: 15px;
+                             gap: 8px;
+                             margin-bottom: 10px;
                          }
                          
                          .total-item {
                              text-align: center;
-                             padding: 8px;
+                             padding: 6px;
                              background-color: #e7f3ff;
                              border: 1px solid #2a5298;
                          }
                          
                          .total-value {
-                             font-size: 16px;
+                             font-size: 14px;
                              font-weight: bold;
                              color: #1e3c72;
                          }
                          
                          .total-label {
-                             font-size: 9px;
+                             font-size: 8px;
                              color: #666;
                          }
                          
                          .combination-info {
                              background-color: #fff3cd;
-                             padding: 8px;
-                             margin-bottom: 10px;
+                             padding: 6px;
+                             margin-bottom: 8px;
                              border-left: 4px solid #ffc107;
-                             font-size: 9px;
+                             font-size: 8px;
                          }
                          
                          .footer {
                              text-align: center;
-                             margin-top: 20px;
-                             font-size: 8px;
+                             margin-top: 15px;
+                             font-size: 7px;
                              color: #666;
                              border-top: 1px solid #ddd;
-                             padding-top: 10px;
+                             padding-top: 8px;
                          }
                          
                          @media print {
-                             body { margin: 10px; }
+                             body { margin: 8px; }
                              .header h1 { font-size: 16px; }
                          }
                      </style>
@@ -2056,45 +2455,100 @@
                                  <th>Cert.</th>
                                  <th>Varietà</th>
                                  <th>Linea</th>
-                                 <th>Entrata<br/>(kg)</th>
-                                 <th>Trasf.<br/>(kg)</th>
-                                 <th>Giacenza<br/>(kg)</th>
                                  <th>Portata<br/>(kg/h)</th>
                                  <th>Inizio</th>
                                  <th>Fine</th>
-                                 <th>Durata</th>
                                  <th>Succo 1ª<br/>(kg)</th>
+                                 <th>Dest.</th>
+                                 <th>Polpa</th>
+                                 <th>°BX</th>
+                                 <th>Cons.</th>
+                                 <th>Bio</th>
                              </tr>
                          </thead>
                          <tbody>
              `;
              
-             // Genera righe fornitori
-             data.fornitori.forEach((fornitore, index) => {
-                 const nomeFornitore = fornitore.nome === 'ALTRO' ? fornitore.altroNome : fornitore.nome;
-                 const nomeVarieta = fornitore.varieta === 'ALTRO' ? fornitore.altraVarieta : fornitore.varieta;
-                 const isBioSpecific = ['BIO EU', 'BIO DEM', 'BIO NTD'].includes(fornitore.certificazione);
-                 const bioClass = isBioSpecific ? 'bio-cell' : '';
-                 
-                 const orarioFineClean = fornitore.orarioFineDisplay ? 
-                     fornitore.orarioFineDisplay.replace(/<[^>]*>/g, '').replace('del giorno', 'g.') : '';
-                 
+             // Sezione combinazioni se presenti
+             if (data.combinationDetails && data.combinationDetails.length > 0) {
                  printContent += `
-                     <tr>
-                         <td><strong>${nomeFornitore || 'N/D'}</strong></td>
-                         <td class="${bioClass}">${fornitore.certificazione || 'N/D'}</td>
-                         <td class="${bioClass}">${nomeVarieta || 'N/D'}</td>
-                         <td class="${bioClass}">${fornitore.lineaTrasformazione || 'N/D'}</td>
-                         <td>${fornitore.quantitaEntrata}</td>
-                         <td>${fornitore.quantitaTrasformata}</td>
-                         <td>${fornitore.giacenza}</td>
-                         <td>${fornitore.portataImpianto}</td>
-                         <td>${fornitore.orarioInizio || '-'}</td>
-                         <td style="font-size: 8px;">${orarioFineClean || '-'}</td>
-                         <td>${fornitore.durataLavorazione || '-'}</td>
-                         <td><strong>${fornitore.quantitaProdotti.prima}</strong></td>
+                     <tr class="combination-header">
+                         <td colspan="13">COMBINAZIONE SUCCO 1ª</td>
                      </tr>
                  `;
+                 
+                 // Genera righe per ogni fornitore nella combinazione
+                 data.combinationDetails.forEach((detail, index) => {
+                     printContent += `
+                         <tr class="combination-group">
+                             <td><strong>${detail.nome}</strong></td>
+                             <td>${detail.certificazione}</td>
+                             <td>-</td>
+                             <td>${detail.linea}</td>
+                             <td>-</td>
+                             <td>-</td>
+                             <td>-</td>
+                             <td><strong>${detail.risultato}</strong></td>
+                             <td colspan="5">Singola contribuzione: ${detail.quantita}kg × ${detail.resa}%</td>
+                         </tr>
+                     `;
+                 });
+                 
+                 // Riga totale combinazione
+                 const totaleCombinazione = data.combinationDetails.reduce((sum, detail) => sum + parseFloat(detail.risultato), 0);
+                 printContent += `
+                     <tr class="combination-group">
+                         <td colspan="7"><strong>TOTALE COMBINAZIONE</strong></td>
+                         <td><strong>${totaleCombinazione.toFixed(1)}</strong></td>
+                         <td colspan="5">Somma delle contribuzioni individuali</td>
+                     </tr>
+                 `;
+             }
+             
+             // Genera righe fornitori normali (non combinati)
+             data.fornitori.forEach((fornitore, index) => {
+                 // Salta i fornitori che fanno parte della combinazione (tranne l'ultimo che mostra il totale)
+                 const isInCombination = data.combinationDetails && data.combinationDetails.some(detail => 
+                     detail.nome === (fornitore.nome === 'ALTRO' ? fornitore.altroNome : fornitore.nome)
+                 );
+                 
+                 if (!isInCombination || fornitore.hasCombination) {
+                     const nomeFornitore = fornitore.nome === 'ALTRO' ? fornitore.altroNome : fornitore.nome;
+                     const nomeVarieta = fornitore.varieta === 'ALTRO' ? fornitore.altraVarieta : fornitore.varieta;
+                     const isBioSpecific = ['BIO EU', 'BIO DEM', 'BIO NTD'].includes(fornitore.certificazione);
+                     const bioClass = isBioSpecific ? 'bio-cell' : '';
+                     
+                     const orarioFineClean = fornitore.orarioFineDisplay ? 
+                         fornitore.orarioFineDisplay.replace(/<[^>]*>/g, '').replace('del giorno', 'g.') : '';
+                     
+                     // Gestione destinazioni (abbreviate)
+                     const destPrima = fornitore.destinazioni.prima ? 
+                         fornitore.destinazioni.prima.split(', ').map(d => d.replace('CONCENTRATO', 'CONC').replace('NAT IN TINI', 'TINI')).join(',') : 'N/D';
+                     
+                     // Caratteristiche prodotto
+                     const polpa = fornitore.caratteristicheProdotti.prima.tenorePolpa || 'N/D';
+                     const brix = fornitore.caratteristicheProdotti.prima.brix || 'N/D';
+                     const conservato = fornitore.caratteristicheProdotti.prima.conservato || 'N/D';
+                     const bio = fornitore.caratteristicheProdotti.prima.bio || 'N/D';
+                     
+                     printContent += `
+                         <tr>
+                             <td><strong>${nomeFornitore || 'N/D'}</strong></td>
+                             <td class="${bioClass}">${fornitore.certificazione || 'N/D'}</td>
+                             <td class="${bioClass}">${nomeVarieta || 'N/D'}</td>
+                             <td class="${bioClass}">${fornitore.lineaTrasformazione || 'N/D'}</td>
+                             <td>${fornitore.portataImpianto}</td>
+                             <td>${fornitore.orarioInizio || '-'}</td>
+                             <td style="font-size: 7px;">${orarioFineClean || '-'}</td>
+                             <td><strong>${fornitore.quantitaProdotti.prima}${fornitore.hasCombination ? ' (C)' : ''}</strong></td>
+                             <td style="font-size: 7px;">${destPrima}</td>
+                             <td>${polpa}</td>
+                             <td>${brix}</td>
+                             <td>${conservato}</td>
+                             <td class="${bioClass}">${bio}</td>
+                         </tr>
+                     `;
+                 }
              });
              
              printContent += `
@@ -2102,17 +2556,12 @@
                      </table>
              `;
              
-             // Sezione combinazioni se presenti
-             if (data.combinationDetails && data.combinationDetails.length > 0) {
-                 printContent += `
-                     <div class="combination-info">
-                         <strong>COMBINAZIONE APPLICATA per Succo 1ª:</strong><br/>
-                         ${data.combinationDetails.map(detail => 
-                             `${detail.nome} [${detail.certificazione}|${detail.linea}]: ${detail.quantita}kg × ${detail.resa}% = ${detail.risultato}kg`
-                         ).join('<br/>')}
-                     </div>
-                 `;
-             }
+             // Legenda
+             printContent += `
+                 <div style="font-size: 7px; margin-bottom: 10px;">
+                     <strong>Legenda:</strong> (C) = Valore da Combinazione | Cert. = Certificazione | Dest. = Destinazione | Cons. = Conservato | Bio = Biologico
+                 </div>
+             `;
              
              printContent += `
                      <div class="summary-section">
@@ -2128,8 +2577,12 @@
                                      <span>${data.fornitori[data.fornitori.length-1].destinazioni.seconda || 'N/D'}</span>
                                  </div>
                                  <div class="summary-item">
-                                     <span>Pastorizzato:</span>
-                                     <span>${data.fornitori[data.fornitori.length-1].caratteristicheProdotti?.seconda?.pastorizzato || 'N/D'}</span>
+                                     <span>Polpa:</span>
+                                     <span>${data.fornitori[data.fornitori.length-1].caratteristicheProdotti?.seconda?.tenorePolpa || 'N/D'}</span>
+                                 </div>
+                                 <div class="summary-item">
+                                     <span>°BX:</span>
+                                     <span>${data.fornitori[data.fornitori.length-1].caratteristicheProdotti?.seconda?.brix || 'N/D'}</span>
                                  </div>
                                  <div class="summary-item">
                                      <span>Conservato:</span>
@@ -2137,7 +2590,7 @@
                                  </div>
                              ` : ''}
                              ${data.sumDetailsSeconda && data.sumDetailsSeconda.length > 1 ? `
-                                 <div style="margin-top: 5px; font-size: 8px; color: #666;">
+                                 <div style="margin-top: 4px; font-size: 7px; color: #666;">
                                      <strong>Dettaglio:</strong> ${formatSumDetails(data.sumDetailsSeconda, 'seconda')}
                                  </div>
                              ` : ''}
@@ -2155,8 +2608,12 @@
                                      <span>${data.fornitori[data.fornitori.length-1].destinazioni.torchiato || 'N/D'}</span>
                                  </div>
                                  <div class="summary-item">
-                                     <span>Pastorizzato:</span>
-                                     <span>${data.fornitori[data.fornitori.length-1].caratteristicheProdotti?.torchiato?.pastorizzato || 'N/D'}</span>
+                                     <span>Polpa:</span>
+                                     <span>${data.fornitori[data.fornitori.length-1].caratteristicheProdotti?.torchiato?.tenorePolpa || 'N/D'}</span>
+                                 </div>
+                                 <div class="summary-item">
+                                     <span>°BX:</span>
+                                     <span>${data.fornitori[data.fornitori.length-1].caratteristicheProdotti?.torchiato?.brix || 'N/D'}</span>
                                  </div>
                                  <div class="summary-item">
                                      <span>Conservato:</span>
@@ -2164,7 +2621,7 @@
                                  </div>
                              ` : ''}
                              ${data.sumDetailsTorchiato && data.sumDetailsTorchiato.length > 1 ? `
-                                 <div style="margin-top: 5px; font-size: 8px; color: #666;">
+                                 <div style="margin-top: 4px; font-size: 7px; color: #666;">
                                      <strong>Dettaglio:</strong> ${formatSumDetails(data.sumDetailsTorchiato, 'torchiato')}
                                  </div>
                              ` : ''}
@@ -2184,7 +2641,7 @@
              printWindow.focus();
          }
          
-         // Eventi principali
+        // Eventi principali
          $('#tipo-agrume-giornaliero').change(function() {
              const agrume = $(this).val();
              if (agrume) {
@@ -2301,3 +2758,4 @@
  </script>
 </body>
 </html>
+         
